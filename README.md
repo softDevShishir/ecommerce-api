@@ -1,105 +1,265 @@
-# E-Commerce API
+# E-Commerce REST API
 
-A production-ready RESTful e-commerce backend built with **Spring Boot 3.x**, **Spring Security**, **Spring Data JPA**, and **PostgreSQL**.
+## Description
+A production-ready REST API for e-commerce applications built with Spring Boot 3.x. Features secure user authentication, product catalog management, shopping cart functionality, and order management with role-based access control.
 
 ## Tech Stack
 
-| Layer       | Technology                         |
-|-------------|-------------------------------------|
-| Framework   | Spring Boot 3.3                    |
-| Security    | Spring Security + JWT (jjwt 0.12)  |
-| Persistence | Spring Data JPA + Hibernate        |
-| Database    | PostgreSQL 16                      |
-| Build       | Maven (Java 21)                    |
-| Container   | Docker + Docker Compose            |
+**Backend:**
+- Spring Boot 3.x
+- Spring Security with JWT authentication
+- Spring Data JPA
+- Lombok
+
+**Database:**
+- PostgreSQL
+
+**Build & DevOps:**
+- Maven
+- Docker & Docker Compose
+- Java 21
+
+**Other:**
+- JWT (JSON Web Tokens) for stateless authentication
+- Hibernate ORM
+
+## Features
+
+✅ **User Management**
+- User registration & login with JWT authentication
+- Role-based access control (ADMIN, USER)
+- Secure password handling
+
+✅ **Product Catalog**
+- Product CRUD operations
+- Search & filtering by category, price range
+- Stock quantity tracking
+- Pagination support
+
+✅ **Shopping Cart**
+- Add/remove items from cart
+- Quantity management
+- Cart persistence per user
+
+✅ **Order Management**
+- Create orders from cart
+- Order history & tracking
+- Order status management (PENDING, CONFIRMED, SHIPPED, DELIVERED, CANCELLED)
+- Order item details with pricing
+
+✅ **Security**
+- JWT token-based authentication
+- Role-based authorization
+- Secure API endpoints
+- Password encryption
+
+✅ **Architecture**
+- Module-wise organization (user, product, order, cart)
+- Clean code with Lombok
+- AuditData base class for timestamp tracking
+- Spring Data JPA repositories
 
 ## Project Structure
 
 ```
-src/main/java/com/shishir/ecommerce/
-├── EcommerceApiApplication.java
-├── entity/          # JPA entities (User, Product, Order, OrderItem, Cart)
-├── repository/      # Spring Data JPA repositories
-├── service/         # Business logic
-├── controller/      # REST controllers
-├── config/          # App-level configuration beans
-└── security/        # JWT filter, UserDetailsService, SecurityConfig
+ecommerce-api/
+├── src/main/java/com/shishir/ecommerce/
+│   ├── config/
+│   │   └── AuditData.java (Base class for entities)
+│   ├── security/
+│   │   ├── UserRole.java
+│   │   ├── JwtTokenProvider.java
+│   │   └── JwtAuthenticationFilter.java
+│   ├── user/ (User management module)
+│   ├── product/ (Product catalog module)
+│   ├── order/ (Order management module)
+│   └── cart/ (Shopping cart module)
+├── src/main/resources/
+│   ├── application.yml
+│   └── database/schema.sql
+├── Dockerfile
+├── docker-compose.yml
+└── pom.xml
 ```
 
-## Getting Started
+## Installation
 
 ### Prerequisites
-- Java 21
-- Maven 3.9+
-- Docker & Docker Compose (or a running PostgreSQL instance)
+- Java 21 or higher
+- Maven 3.8+
+- PostgreSQL 13+ (or use Docker)
+- Git
 
-### Run with Docker Compose
+### Local Development Setup
 
+1. **Clone repository:**
 ```bash
-docker compose up --build
+git clone https://github.com/softDevShishir/ecommerce-api.git
+cd ecommerce-api
 ```
 
-The API will be available at `http://localhost:8080/api/v1`.
+2. **Configure database:**
+   - Create PostgreSQL database: `ecommerce_db`
+   - Update `application.yml` with database credentials
 
-### Run Locally
-
-1. Start PostgreSQL and create the database:
-
+3. **Build project:**
 ```bash
-psql -U postgres -c "CREATE DATABASE ecommerce_db;"
-psql -U postgres -d ecommerce_db -f src/main/resources/database/schema.sql
+mvn clean install
 ```
 
-2. Export environment variables (or edit `application.yml`):
-
+4. **Run application:**
 ```bash
-export DB_HOST=localhost
-export DB_USERNAME=postgres
-export DB_PASSWORD=postgres
-export JWT_SECRET=your-256-bit-secret
+mvn spring-boot:run
 ```
 
-3. Start the application:
+Application will start on `http://localhost:8080`
 
+## Docker Setup
+
+### Quick Start with Docker Compose
+
+1. **Build and run services:**
 ```bash
-./mvnw spring-boot:run -Dspring-boot.run.profiles=dev
+docker-compose up -d
 ```
 
-## Environment Variables
+This will:
+- Start PostgreSQL on port 5432
+- Load database schema automatically
+- Start Spring Boot API on port 8080
 
-| Variable                  | Default                        | Description                     |
-|---------------------------|--------------------------------|---------------------------------|
-| `DB_HOST`                 | `localhost`                    | PostgreSQL host                 |
-| `DB_PORT`                 | `5432`                         | PostgreSQL port                 |
-| `DB_NAME`                 | `ecommerce_db`                 | Database name                   |
-| `DB_USERNAME`             | `postgres`                     | Database user                   |
-| `DB_PASSWORD`             | `postgres`                     | Database password               |
-| `JWT_SECRET`              | *(change in prod)*             | HS256 secret (min 256 bits)     |
-| `JWT_EXPIRATION_MS`       | `86400000`                     | Access token TTL (ms)           |
-| `JWT_REFRESH_EXPIRATION_MS` | `604800000`                  | Refresh token TTL (ms)          |
-| `CORS_ALLOWED_ORIGINS`    | `http://localhost:3000`        | Comma-separated allowed origins |
+2. **Access application:**
+- API: http://localhost:8080
+- Database: localhost:5432
 
-## Running Tests
-
+3. **Stop services:**
 ```bash
-./mvnw test
+docker-compose down
 ```
 
-## API Endpoints (planned)
+### Environment Variables
 
-| Method | Path                        | Description           | Auth     |
-|--------|-----------------------------|-----------------------|----------|
-| POST   | `/auth/register`            | Register user         | Public   |
-| POST   | `/auth/login`               | Login / get JWT       | Public   |
-| GET    | `/products`                 | List products         | Public   |
-| GET    | `/products/{id}`            | Get product           | Public   |
-| POST   | `/products`                 | Create product        | ADMIN    |
-| GET    | `/cart`                     | View cart             | User     |
-| POST   | `/cart/items`               | Add item to cart      | User     |
-| POST   | `/orders`                   | Place order           | User     |
-| GET    | `/orders`                   | List user orders      | User     |
-| GET    | `/admin/orders`             | List all orders       | ADMIN    |
+Database credentials can be customized in `docker-compose.yml`:
+- `POSTGRES_DB=ecommerce_db`
+- `POSTGRES_USER=ecommerce_user`
+- `POSTGRES_PASSWORD=ecommerce_password`
+
+## Database Schema
+
+**Tables:**
+- `users` - User accounts with roles
+- `products` - Product catalog
+- `orders` - Order records
+- `order_items` - Items in each order
+- `cart` - Shopping cart per user
+- `cart_items` - Items in cart
+
+**Relationships:**
+- One User → Many Orders
+- One User → One Cart
+- One Order → Many OrderItems
+- One Product → Many OrderItems
+- One Cart → Many CartItems
+
+## API Endpoints (Preview)
+
+### Authentication
+- `POST /api/auth/register` - User registration
+- `POST /api/auth/login` - User login (returns JWT token)
+
+### Products
+- `GET /api/products` - Get all products (with filters)
+- `GET /api/products/{id}` - Get product by ID
+- `POST /api/products` - Create product (ADMIN only)
+- `PUT /api/products/{id}` - Update product (ADMIN only)
+- `DELETE /api/products/{id}` - Delete product (ADMIN only)
+
+### Orders
+- `GET /api/orders` - Get user's orders
+- `POST /api/orders` - Create new order
+- `GET /api/orders/{id}` - Get order details
+- `PUT /api/orders/{id}/status` - Update order status (ADMIN only)
+
+### Cart
+- `GET /api/cart` - Get user's cart
+- `POST /api/cart/items` - Add item to cart
+- `DELETE /api/cart/items/{itemId}` - Remove item from cart
+
+## Authentication
+
+API uses JWT (JSON Web Tokens) for stateless authentication.
+
+**Getting a Token:**
+```bash
+curl -X POST http://localhost:8080/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"user@example.com","password":"password123"}'
+```
+
+**Using Token:**
+```bash
+curl -H "Authorization: Bearer <your_jwt_token>" \
+  http://localhost:8080/api/products
+```
+
+## Testing
+
+Run unit tests:
+```bash
+mvn test
+```
+
+## Deployment
+
+### Build Docker Image
+```bash
+docker build -t ecommerce-api:latest .
+```
+
+### Push to Docker Registry
+```bash
+docker tag ecommerce-api:latest <your-registry>/ecommerce-api:latest
+docker push <your-registry>/ecommerce-api:latest
+```
+
+## Architecture Highlights
+
+- **Module-wise Organization** - Each feature (user, product, order, cart) is a separate module
+- **AuditData Base Class** - All entities inherit createdAt/updatedAt timestamps
+- **Repository Pattern** - Spring Data JPA for data access
+- **Security** - JWT authentication with role-based authorization
+- **Docker Support** - Production-ready containerization
+
+## Performance Features
+
+- Database indexes on foreign keys and search columns
+- Pagination support for large datasets
+- Efficient queries with Spring Data JPA
+- Caching-ready architecture
+
+## Future Enhancements
+
+- Payment gateway integration
+- Email notifications
+- Advanced reporting & analytics
+- API rate limiting
+- Cache layer (Redis)
+- Microservices architecture (split modules)
+
+## Contributing
+
+This is a portfolio project. Feel free to fork and use as reference.
+
+## Author
+
+**Shishir**
+- GitHub: [github.com/softDevShishir](https://github.com/softDevShishir)
+- Email: softdevshishir@gmail.com
+- Location: Dhaka, Bangladesh
+
+Backend Engineer specializing in REST APIs, Microservices, and Security.
+3.5 years of production experience.
 
 ## License
 
-MIT
+MIT License

@@ -1,63 +1,39 @@
-# Maven
-target/
-!.mvn/wrapper/maven-wrapper.jar
-!**/src/main/**/target/
-!**/src/test/**/target/
-
-# IntelliJ IDEA
+# IDE files
 .idea/
-*.iws
-*.iml
-*.ipr
-
-# Eclipse
-.apt_generated
-.classpath
-.factorypath
-.project
-.settings
-.springBeans
-.sts4-cache
-
-# VS Code
 .vscode/
+*.iml
+.classpath
+.project
+.settings/
+*.swp
+*.swo
 
-# NetBeans
-/nbproject/private/
-/nbbuild/
-/dist/
-/nbdist/
-/.nb-gradle/
+# Build folders
+target/
 build/
-!**/src/main/**/build/
-!**/src/test/**/build/
+bin/
+out/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# OS files
+.DS_Store
+Thumbs.db
+*.tmp
+
+# Maven files
+.m2/
+settings-security.xml
 
 # Logs
 *.log
 logs/
+*.log.*
 
-# Environment / secrets
-.env
-.env.*
-!.env.example
-*.pem
-*.key
-*.jks
-*.p12
-
-# OS
-.DS_Store
-Thumbs.db
-
-# Spring Boot packaged jar
-*.jar
-*.war
-*.nar
-*.ear
-*.zip
-*.tar.gz
-*.rar
-
-# JVM crash logs
-hs_err_pid*
-replay_pid*
+# Database files
+*.db
+*.sqlite
+*.sqlite3
