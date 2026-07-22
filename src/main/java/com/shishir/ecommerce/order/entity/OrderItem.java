@@ -24,13 +24,11 @@ public class OrderItem {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // Owning side — the order this line item belongs to.
     @ToString.Exclude
     @ManyToOne
     @JoinColumn(name = "order_id", nullable = false)
     private Order order;
 
-    // Owning side — the product purchased.
     @ManyToOne
     @JoinColumn(name = "product_id", nullable = false)
     private Product product;

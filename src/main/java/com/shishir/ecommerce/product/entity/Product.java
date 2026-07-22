@@ -41,13 +41,11 @@ public class Product extends AuditData {
 
     private String category;
 
-    // Inverse side of OrderItem.product — line items across all orders.
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
     @OneToMany(mappedBy = "product")
     private List<OrderItem> orderItems;
 
-    // Inverse side of CartItem.product — appearances of this product in carts.
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
     @OneToMany(mappedBy = "product")

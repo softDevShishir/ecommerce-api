@@ -21,13 +21,11 @@ public class CartItem {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // Owning side — the cart this item belongs to.
     @ToString.Exclude
     @ManyToOne
     @JoinColumn(name = "cart_id", nullable = false)
     private Cart cart;
 
-    // Owning side — the product held in the cart.
     @ManyToOne
     @JoinColumn(name = "product_id", nullable = false)
     private Product product;

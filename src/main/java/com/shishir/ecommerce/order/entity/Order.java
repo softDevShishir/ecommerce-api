@@ -32,7 +32,6 @@ public class Order extends AuditData {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // Owning side — the user who placed this order.
     @ToString.Exclude
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
@@ -48,8 +47,6 @@ public class Order extends AuditData {
     @Column(nullable = false)
     private OrderStatus status;
 
-    // Owning side of the relationship is OrderItem.order; items are
-    // persisted/removed together with their parent order.
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)

@@ -27,14 +27,11 @@ public class Cart extends AuditData {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // Owning side — one cart per user.
     @ToString.Exclude
     @OneToOne
     @JoinColumn(name = "user_id", nullable = false, unique = true)
     private User user;
 
-    // Owning side of the relationship is CartItem.cart; items are
-    // persisted/removed together with their parent cart.
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
     @OneToMany(mappedBy = "cart", cascade = CascadeType.ALL)

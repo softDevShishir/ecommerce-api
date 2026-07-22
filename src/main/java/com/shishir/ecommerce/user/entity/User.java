@@ -46,13 +46,11 @@ public class User extends AuditData {
     @Column(nullable = false)
     private UserRole role;
 
-    // Inverse side of Order.user — one user places many orders.
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
     @OneToMany(mappedBy = "user")
     private List<Order> orders;
 
-    // Inverse side of Cart.user — one cart per user.
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
     @OneToOne(mappedBy = "user")
