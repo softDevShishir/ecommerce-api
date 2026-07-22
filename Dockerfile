@@ -18,9 +18,7 @@ COPY --from=builder /app/target/*.jar app.jar
 
 EXPOSE 8080
 
-# server.servlet.context-path is /api/v1 (see application.yml), so the probe
-# path must include it or every check 404s.
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-  CMD curl -f http://localhost:8080/api/v1/actuator/health || exit 1
+  CMD curl -f http://localhost:8080/actuator/health || exit 1
 
 ENTRYPOINT ["java", "-jar", "app.jar"]
