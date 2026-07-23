@@ -27,7 +27,7 @@ mvn test -Dtest=ClassName#methodName          # single test method
 mvn verify                 # build + tests, what CI runs
 ```
 
-`src/test/java/.../ecommerce/` currently only contains a `.gitkeep` — no tests exist yet.
+The `@SpringBootApplication` entry point is `EcommerceApiApplication` (root `com.shishir.ecommerce` package) — `@SpringBootTest` needs it to find a configuration class, so don't remove/relocate it without checking test bootstrapping still works.
 
 ### Local database
 
@@ -39,6 +39,10 @@ docker-compose down
 For `mvn spring-boot:run` against a manually-created `ecommerce_db` Postgres instance, apply `src/main/resources/database/schema.sql` yourself first — the `default` and `prod` Spring profiles use `ddl-auto: validate` (Hibernate checks the schema but never creates/alters it). Only the `dev` profile (`application-dev.yml`) uses `ddl-auto: update`.
 
 Key env vars (see `application.yml`): `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USERNAME`, `DB_PASSWORD`, `JWT_SECRET`, `JWT_EXPIRATION_MS`, `CORS_ALLOWED_ORIGINS`.
+
+### Running the integration tests
+
+`src/test/resources/application.yml` is a standalone config (it fully replaces `src/main/resources/application.yml` on the test classpath, not merges with it) pointing at a separate `ecommerce_test` database with `ddl-auto: create-drop`, so tests manage their own schema and never touch dev data. You need a real Postgres reachable with those settings — e.g. `docker run -d -e POSTGRES_DB=ecommerce_test -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres -p 5432:5432 postgres:16-alpine`, or override `DB_HOST`/`DB_PORT`/`DB_NAME`/`DB_USERNAME`/`DB_PASSWORD` env vars to point elsewhere (CI's `ci.yml` already provisions exactly this). `mvn test` picks it up with no extra flags once the database is reachable.
 
 ## Architecture
 
@@ -64,6 +68,7 @@ Code is organized **feature-first**, not layer-first: `user/`, `product/`, `orde
 - Enums (`role`, order `status`) are persisted with `@Enumerated(EnumType.STRING)` and mirrored by a `CHECK` constraint in `schema.sql` — the schema file is the source of truth for constraints Hibernate's `validate` mode checks against, so schema and entity changes must be kept in sync manually.
 - Services are `@Transactional` by default, with `@Transactional(readOnly = true)` on read-only methods; they throw the `exception/` types directly rather than returning `Optional`/error codes.
 - Controllers map entities to response DTOs manually (Lombok `@Builder`), no MapStruct/ModelMapper.
+- `open-in-view` is disabled, so lazy `@OneToMany` associations (e.g. `Cart.cartItems`) can't be read after their owning `@Transactional` service method returns. `CartController` deliberately avoids touching `cart.getCartItems()` and instead queries items separately via `CartService.getCartItems()` — follow that pattern (a dedicated query) rather than reaching into a lazy collection from a controller, and rather than reassigning a `cascade = ALL, orphanRemoval = true` collection field directly (breaks Hibernate's orphan-removal tracking).
 
 ### Adding a new module or endpoint
 

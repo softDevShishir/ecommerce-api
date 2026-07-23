@@ -39,7 +39,8 @@ public class CartController {
     public ResponseEntity<CartResponse> getCart() {
         Long userId = currentUserProvider.getCurrentUserId();
         log.info("GET {} userId={}", Routes.CART, userId);
-        return ResponseEntity.ok(toResponse(cartService.getCartByUserId(userId)));
+        Cart cart = cartService.getCartByUserId(userId);
+        return ResponseEntity.ok(toResponse(cart, cartService.getCartItems(userId)));
     }
 
     @PostMapping(Routes.CART_ITEMS)
@@ -48,7 +49,7 @@ public class CartController {
         log.info("POST {} userId={} productId={} quantity={}",
                 Routes.CART_ITEMS, userId, request.getProductId(), request.getQuantity());
         Cart cart = cartService.addItemToCart(userId, request.getProductId(), request.getQuantity());
-        return ResponseEntity.ok(toResponse(cart));
+        return ResponseEntity.ok(toResponse(cart, cartService.getCartItems(userId)));
     }
 
     @PutMapping(Routes.CART_ITEM_BY_ID)
@@ -58,7 +59,7 @@ public class CartController {
         log.info("PUT {} userId={} cartItemId={} quantity={}",
                 Routes.CART_ITEM_BY_ID, userId, cartItemId, request.getQuantity());
         Cart cart = cartService.updateCartItemQuantity(userId, cartItemId, request.getQuantity());
-        return ResponseEntity.ok(toResponse(cart));
+        return ResponseEntity.ok(toResponse(cart, cartService.getCartItems(userId)));
     }
 
     @DeleteMapping(Routes.CART_ITEM_BY_ID)
@@ -66,7 +67,7 @@ public class CartController {
         Long userId = currentUserProvider.getCurrentUserId();
         log.info("DELETE {} userId={} cartItemId={}", Routes.CART_ITEM_BY_ID, userId, cartItemId);
         Cart cart = cartService.removeItemFromCart(userId, cartItemId);
-        return ResponseEntity.ok(toResponse(cart));
+        return ResponseEntity.ok(toResponse(cart, cartService.getCartItems(userId)));
     }
 
     @DeleteMapping(Routes.CART)
@@ -77,10 +78,11 @@ public class CartController {
         return ResponseEntity.noContent().build();
     }
 
-    private CartResponse toResponse(Cart cart) {
-        List<CartItemResponse> items = cart.getCartItems() == null
-                ? List.of()
-                : cart.getCartItems().stream().map(this::toItemResponse).toList();
+    // cartItems come from a dedicated query rather than cart.getCartItems() — that
+    // association is a lazy @OneToMany, and with open-in-view disabled it's no longer
+    // safe to touch by the time the response is built here.
+    private CartResponse toResponse(Cart cart, List<CartItem> cartItems) {
+        List<CartItemResponse> items = cartItems.stream().map(this::toItemResponse).toList();
 
         int totalItems = items.stream().mapToInt(CartItemResponse::getQuantity).sum();
         BigDecimal totalPrice = items.stream()
