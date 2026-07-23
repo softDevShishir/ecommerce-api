@@ -35,4 +35,5 @@ public final class Routes {
     public static final String AUTH = V1 + "/auth";
     public static final String AUTH_LOGIN = AUTH + "/login";
     public static final String AUTH_REGISTER = AUTH + "/register";
+    public static final String AUTH_ME = AUTH + "/me";
 }
