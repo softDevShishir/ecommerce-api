@@ -6,6 +6,14 @@ import com.shishir.ecommerce.product.dto.ProductResponse;
 import com.shishir.ecommerce.product.dto.ProductUpdateRequest;
 import com.shishir.ecommerce.product.entity.Product;
 import com.shishir.ecommerce.product.service.ProductService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.Parameters;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -24,6 +32,7 @@ import java.util.List;
 
 @Slf4j
 @RestController
+@Tag(name = "Product Management", description = "Product catalog, search, and filtering")
 public class ProductController {
 
     private final ProductService productService;
@@ -33,6 +42,10 @@ public class ProductController {
     }
 
     @PostMapping(Routes.PRODUCTS)
+    @Operation(summary = "Create product", description = "Create new product (ADMIN only)")
+    @ApiResponse(responseCode = "201", description = "Product created",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = ProductResponse.class)))
+    @ApiResponse(responseCode = "400", description = "Invalid product data")
     public ResponseEntity<ProductResponse> create(@Valid @RequestBody ProductCreateRequest request) {
         log.info("POST {} name={}", Routes.PRODUCTS, request.getName());
         Product product = productService.createProduct(request.getName(), request.getDescription(),
@@ -41,6 +54,10 @@ public class ProductController {
     }
 
     @GetMapping(Routes.PRODUCT_BY_ID)
+    @Operation(summary = "Get product by ID", description = "Retrieve product details")
+    @ApiResponse(responseCode = "200", description = "Product found",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = ProductResponse.class)))
+    @ApiResponse(responseCode = "404", description = "Product not found")
     public ResponseEntity<ProductResponse> getById(@PathVariable Long id) {
         log.info("GET {} id={}", Routes.PRODUCT_BY_ID, id);
         return ResponseEntity.ok(toResponse(productService.getProductById(id)));
@@ -51,6 +68,15 @@ public class ProductController {
      * then price range; falls back to every product if none are given.
      */
     @GetMapping(Routes.PRODUCTS)
+    @Operation(summary = "Get all products", description = "Retrieve products with optional search and filtering")
+    @Parameters({
+            @Parameter(name = "name", description = "Search by product name"),
+            @Parameter(name = "category", description = "Filter by category"),
+            @Parameter(name = "minPrice", description = "Filter by minimum price"),
+            @Parameter(name = "maxPrice", description = "Filter by maximum price")
+    })
+    @ApiResponse(responseCode = "200", description = "Products retrieved",
+            content = @Content(mediaType = "application/json", array = @ArraySchema(schema = @Schema(implementation = ProductResponse.class))))
     public ResponseEntity<List<ProductResponse>> search(
             @RequestParam(required = false) String name,
             @RequestParam(required = false) String category,
@@ -75,6 +101,10 @@ public class ProductController {
     }
 
     @PutMapping(Routes.PRODUCT_BY_ID)
+    @Operation(summary = "Update product", description = "Update product details (ADMIN only)")
+    @ApiResponse(responseCode = "200", description = "Product updated",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = ProductResponse.class)))
+    @ApiResponse(responseCode = "404", description = "Product not found")
     public ResponseEntity<ProductResponse> update(@PathVariable Long id,
                                                    @Valid @RequestBody ProductUpdateRequest request) {
         log.info("PUT {} id={}", Routes.PRODUCT_BY_ID, id);
@@ -84,6 +114,9 @@ public class ProductController {
     }
 
     @DeleteMapping(Routes.PRODUCT_BY_ID)
+    @Operation(summary = "Delete product", description = "Delete product by ID (ADMIN only)")
+    @ApiResponse(responseCode = "204", description = "Product deleted")
+    @ApiResponse(responseCode = "404", description = "Product not found")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         log.info("DELETE {} id={}", Routes.PRODUCT_BY_ID, id);
         productService.deleteProduct(id);

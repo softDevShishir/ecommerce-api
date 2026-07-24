@@ -9,6 +9,11 @@ import com.shishir.ecommerce.cart.entity.CartItem;
 import com.shishir.ecommerce.cart.service.CartService;
 import com.shishir.ecommerce.config.Routes;
 import com.shishir.ecommerce.security.CurrentUserProvider;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -25,6 +30,7 @@ import java.util.List;
 
 @Slf4j
 @RestController
+@Tag(name = "Shopping Cart", description = "Cart management, add/remove items, checkout")
 public class CartController {
 
     private final CartService cartService;
@@ -36,6 +42,10 @@ public class CartController {
     }
 
     @GetMapping(Routes.CART)
+    @Operation(summary = "Get shopping cart", description = "Retrieve current user's shopping cart with all items")
+    @ApiResponse(responseCode = "200", description = "Cart retrieved",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = CartResponse.class)))
+    @ApiResponse(responseCode = "404", description = "Cart not found")
     public ResponseEntity<CartResponse> getCart() {
         Long userId = currentUserProvider.getCurrentUserId();
         log.info("GET {} userId={}", Routes.CART, userId);
@@ -44,6 +54,11 @@ public class CartController {
     }
 
     @PostMapping(Routes.CART_ITEMS)
+    @Operation(summary = "Add item to cart", description = "Add product to shopping cart with quantity")
+    @ApiResponse(responseCode = "200", description = "Item added to cart",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = CartResponse.class)))
+    @ApiResponse(responseCode = "400", description = "Invalid quantity or insufficient stock")
+    @ApiResponse(responseCode = "404", description = "Product not found")
     public ResponseEntity<CartResponse> addItem(@Valid @RequestBody CartAddItemRequest request) {
         Long userId = currentUserProvider.getCurrentUserId();
         log.info("POST {} userId={} productId={} quantity={}",
@@ -53,6 +68,10 @@ public class CartController {
     }
 
     @PutMapping(Routes.CART_ITEM_BY_ID)
+    @Operation(summary = "Update cart item quantity", description = "Update quantity of item in cart")
+    @ApiResponse(responseCode = "200", description = "Item quantity updated")
+    @ApiResponse(responseCode = "400", description = "Invalid quantity")
+    @ApiResponse(responseCode = "404", description = "Cart item not found")
     public ResponseEntity<CartResponse> updateItem(@PathVariable Long cartItemId,
                                                      @Valid @RequestBody CartUpdateItemRequest request) {
         Long userId = currentUserProvider.getCurrentUserId();
@@ -63,6 +82,9 @@ public class CartController {
     }
 
     @DeleteMapping(Routes.CART_ITEM_BY_ID)
+    @Operation(summary = "Remove item from cart", description = "Remove product from shopping cart")
+    @ApiResponse(responseCode = "200", description = "Item removed from cart")
+    @ApiResponse(responseCode = "404", description = "Cart item not found")
     public ResponseEntity<CartResponse> removeItem(@PathVariable Long cartItemId) {
         Long userId = currentUserProvider.getCurrentUserId();
         log.info("DELETE {} userId={} cartItemId={}", Routes.CART_ITEM_BY_ID, userId, cartItemId);
@@ -71,6 +93,9 @@ public class CartController {
     }
 
     @DeleteMapping(Routes.CART)
+    @Operation(summary = "Clear shopping cart", description = "Remove all items from shopping cart")
+    @ApiResponse(responseCode = "204", description = "Cart cleared")
+    @ApiResponse(responseCode = "404", description = "Cart not found")
     public ResponseEntity<Void> clear() {
         Long userId = currentUserProvider.getCurrentUserId();
         log.info("DELETE {} userId={}", Routes.CART, userId);

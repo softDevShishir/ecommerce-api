@@ -70,6 +70,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, Routes.USER_REGISTER).permitAll()
                         .requestMatchers(HttpMethod.GET, Routes.PRODUCTS).permitAll()
                         .requestMatchers(HttpMethod.GET, Routes.PRODUCT_BY_ID).permitAll()
+                        .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
                         .requestMatchers(HttpMethod.DELETE, Routes.PRODUCTS + "/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PUT, Routes.ORDER_STATUS).hasRole("ADMIN")
                         .anyRequest().authenticated()

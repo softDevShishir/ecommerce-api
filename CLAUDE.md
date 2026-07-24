@@ -73,3 +73,7 @@ Code is organized **feature-first**, not layer-first: `user/`, `product/`, `orde
 ### Adding a new module or endpoint
 
 Follow the existing per-feature package shape (`controller`/`service`/`repository`/`entity`/`dto`), add path constants to `Routes`, wire authorization rules into `SecurityConfig.filterChain`, and add any new SQL constraints to `database/schema.sql` (remember `ddl-auto: validate` outside `dev`).
+
+### API documentation (Swagger / OpenAPI)
+
+`config/SwaggerConfig.java` configures Springdoc: an `OpenAPI` bean with title/contact/license/servers plus a `Bearer Authentication` JWT `SecurityScheme`, and two `GroupedOpenApi` beans (`public-apis`, `secured-apis`) that split docs by path prefix — these groupings mirror the endpoint list in the task spec, not the actual per-method rules in `SecurityConfig` (e.g. `POST /api/v1/users/register` is grouped under "secured" even though it's `permitAll`), so don't treat group membership as a security source of truth. `SecurityConfig.filterChain` explicitly `permitAll`s `/swagger-ui/**`, `/swagger-ui.html`, `/v3/api-docs/**` — new cross-cutting public paths need the same treatment. UI at `/swagger-ui.html`, raw spec at `/v3/api-docs`. Controllers use `@Tag`/`@Operation`/`@ApiResponse` (`io.swagger.v3.oas.annotations.*`); response DTOs use `@Schema`. Springdoc v2's `GroupedOpenApi` lives at `org.springdoc.core.models.GroupedOpenApi` (not `org.springdoc.core.GroupedOpenApi`, which is the v1 package and won't compile against the v2 starter this project uses).

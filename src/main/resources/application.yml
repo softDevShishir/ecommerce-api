@@ -32,6 +32,17 @@ spring:
     init:
       mode: never
 
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+    display-request-duration: true
+    operations-sorter: method
+    tags-sorter: alpha
+  show-actuator: false
+
 logging:
   level:
     com.shishir.ecommerce: INFO
