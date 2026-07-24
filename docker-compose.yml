@@ -8,51 +8,60 @@ services:
   postgres:
     image: postgres:15-alpine
     container_name: ecommerce_postgres
-    restart: unless-stopped
     environment:
-      POSTGRES_DB: ecommerce_db
-      POSTGRES_USER: ecommerce_user
-      POSTGRES_PASSWORD: ecommerce_password
+      POSTGRES_DB: ${DB_NAME:-ecommerce_db}
+      POSTGRES_USER: ${DB_USERNAME:-ecommerce_user}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-ecommerce_password}
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./src/main/resources/database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
       - ./src/main/resources/database/data.sql:/docker-entrypoint-initdb.d/02-data.sql
+    networks:
+      - ecommerce-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ecommerce_user -d ecommerce_db"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-ecommerce_user} -d ${DB_NAME:-ecommerce_db}"]
       interval: 10s
       timeout: 5s
       retries: 5
-    networks:
-      - ecommerce-network
+      start_period: 10s
+    restart: unless-stopped
 
   app:
     build:
       context: .
       dockerfile: Dockerfile
     container_name: ecommerce_api
-    restart: unless-stopped
-    ports:
-      - "8080:8080"
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/ecommerce_db
-      SPRING_DATASOURCE_USERNAME: ecommerce_user
-      SPRING_DATASOURCE_PASSWORD: ecommerce_password
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${DB_NAME:-ecommerce_db}
+      SPRING_DATASOURCE_USERNAME: ${DB_USERNAME:-ecommerce_user}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-ecommerce_password}
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
       SPRING_JPA_DATABASE_PLATFORM: org.hibernate.dialect.PostgreSQLDialect
-      JWT_SECRET: change-me-in-production-use-at-least-256-bit-secret-key
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-dev}
+      JWT_SECRET: ${JWT_SECRET:-your-secret-key}
+      JWT_EXPIRATION: ${JWT_EXPIRATION:-86400000}
+      SERVER_PORT: 8080
+    ports:
+      - "8080:8080"
     depends_on:
       postgres:
         condition: service_healthy
     networks:
       - ecommerce-network
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8080/actuator/health || exit 1"]
+      test: ["CMD", "curl", "-f", "http://localhost:8080/swagger-ui.html"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 40s
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
 volumes:
   postgres_data:

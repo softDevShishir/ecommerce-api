@@ -42,7 +42,9 @@ docker-compose down
 
 The base (no-profile) config and `application-dev.yml` both use `ddl-auto: update`, so Hibernate creates/alters the schema itself on startup — including the `user_role`/`order_status` native Postgres enum types (see Data layer below), so `mvn spring-boot:run` against an empty `ecommerce_db` works with no manual schema step. Only `application-prod.yml` uses `ddl-auto: validate` (Hibernate checks the schema but never creates/alters it) — apply `src/main/resources/database/schema.sql` yourself first when running with `prod` active. `dev` and `prod` are standalone `application-{profile}.yml` files (Spring's per-profile file convention), not sections inside `application.yml`.
 
-Key env vars (see `application.yml`/`application-prod.yml`): `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USERNAME`, `DB_PASSWORD`, `JWT_SECRET`, `JWT_EXPIRATION_MS`, `CORS_ALLOWED_ORIGINS`.
+Key env vars (see `application.yml`/`application-prod.yml`): `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USERNAME`, `DB_PASSWORD`, `JWT_SECRET`, `JWT_EXPIRATION`, `CORS_ALLOWED_ORIGINS`. `.env.example` documents the full local-dev set (`docker-compose.yml` reads a `.env` file automatically for its `${VAR}` substitutions).
+
+`SecurityConfig` does not `permitAll` `/actuator/**`, so health checks use `/swagger-ui.html` (public) instead of `/actuator/health` — both `Dockerfile`'s `HEALTHCHECK` and `docker-compose.yml`'s `app` healthcheck rely on this.
 
 ### Running the integration tests
 

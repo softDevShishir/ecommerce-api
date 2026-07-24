@@ -29,7 +29,7 @@ logging:
 
 jwt:
   secret: ${JWT_SECRET:test-secret-key-minimum-256-bits-long-for-hs512-signing-padding}
-  expiration: ${JWT_EXPIRATION_MS:86400000}
+  expiration: ${JWT_EXPIRATION:86400000}
 
 app:
   cors:

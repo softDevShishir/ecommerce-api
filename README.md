@@ -1,96 +1,127 @@
 # E-Commerce REST API
 
-## Description
-A production-ready REST API for e-commerce applications built with Spring Boot 3.x. Features secure user authentication, product catalog management, shopping cart functionality, and order management with role-based access control.
+A production-ready REST API for e-commerce applications built with Spring Boot 3.x and modern architecture patterns. Features secure user authentication with JWT, complete product catalog management, shopping cart functionality, and order management with role-based access control.
 
-## Tech Stack
+## 🚀 Features
 
-**Backend:**
+### User Management
+- User registration with email validation
+- Secure login with JWT token generation
+- Role-based access control (ADMIN, USER)
+- User profile management
+- Password encryption with BCrypt
+
+### Product Catalog
+- Complete product CRUD operations
+- Search and filtering by name, category, price range
+- Stock quantity tracking
+- Product categorization
+- Pagination support
+
+### Shopping Cart
+- Add/remove products from cart
+- Update item quantities
+- Real-time cart total calculation
+- Cart persistence per user
+- Clear cart functionality
+
+### Order Management
+- One-click checkout from cart
+- Order history and tracking
+- Order status management (PENDING, CONFIRMED, SHIPPED, DELIVERED, CANCELLED)
+- Order item details with pricing
+- Admin order status updates
+
+### Security
+- JWT (JSON Web Token) authentication
+- Spring Security integration
+- Role-based endpoint protection
+- Password encryption (BCrypt)
+- CORS enabled for frontend integration
+- Stateless API design
+
+### API Documentation
+- Swagger/OpenAPI integration
+- Interactive API documentation
+- Public and Protected endpoint grouping
+- Live API testing with Swagger UI
+
+## 📋 Tech Stack
+
+**Backend Framework**
 - Spring Boot 3.x
-- Spring Security with JWT authentication
+- Spring Security
 - Spring Data JPA
 - Lombok
 
-**Database:**
-- PostgreSQL
-
-**Build & DevOps:**
-- Maven
-- Docker & Docker Compose
-- Java 21
-
-**Other:**
-- JWT (JSON Web Tokens) for stateless authentication
+**Database**
+- PostgreSQL 15
 - Hibernate ORM
+- Database schema via schema.sql
 
-## Features
+**API & Documentation**
+- REST API
+- Swagger/OpenAPI (Springdoc)
+- JWT for authentication
 
-✅ **User Management**
-- User registration & login with JWT authentication
-- Role-based access control (ADMIN, USER)
-- Secure password handling
+**DevOps & Deployment**
+- Docker & Docker Compose
+- Maven build automation
+- Multi-profile configuration (dev, prod)
 
-✅ **Product Catalog**
-- Product CRUD operations
-- Search & filtering by category, price range
-- Stock quantity tracking
-- Pagination support
+**Testing**
+- JUnit 5
+- Spring Boot Test
+- MockMvc for integration tests
+- 22 integration tests
 
-✅ **Shopping Cart**
-- Add/remove items from cart
-- Quantity management
-- Cart persistence per user
-
-✅ **Order Management**
-- Create orders from cart
-- Order history & tracking
-- Order status management (PENDING, CONFIRMED, SHIPPED, DELIVERED, CANCELLED)
-- Order item details with pricing
-
-✅ **Security**
-- JWT token-based authentication
-- Role-based authorization
-- Secure API endpoints
-- Password encryption
-
-✅ **Architecture**
+**Architecture**
 - Module-wise organization (user, product, order, cart)
-- Clean code with Lombok
 - AuditData base class for timestamp tracking
-- Spring Data JPA repositories
+- Service layer for business logic
+- Controller layer for REST endpoints
+- Global exception handling
+- Clean separation of concerns
 
-## Project Structure
+## 🏗️ Project Structure
 
 ```
 ecommerce-api/
 ├── src/main/java/com/shishir/ecommerce/
-│   ├── config/
-│   │   └── AuditData.java (Base class for entities)
-│   ├── security/
-│   │   ├── UserRole.java
-│   │   ├── JwtTokenProvider.java
-│   │   └── JwtAuthenticationFilter.java
-│   ├── user/ (User management module)
-│   ├── product/ (Product catalog module)
-│   ├── order/ (Order management module)
-│   └── cart/ (Shopping cart module)
+│   ├── config/              # Configuration classes (Security, Swagger, AuditData)
+│   ├── security/             # JWT, authentication, security config
+│   ├── exception/             # Custom exceptions and global handler
+│   ├── user/                 # User module (entity, service, controller, dto)
+│   ├── product/               # Product module
+│   ├── order/                 # Order module
+│   └── cart/                  # Cart module
 ├── src/main/resources/
-│   ├── application.yml
-│   └── database/schema.sql
-├── Dockerfile
-├── docker-compose.yml
-└── pom.xml
+│   ├── application.yml        # Main configuration
+│   ├── application-dev.yml    # Development profile
+│   ├── application-prod.yml   # Production profile
+│   └── database/
+│       ├── schema.sql          # Database schema
+│       └── data.sql            # Sample test data
+├── src/test/java/              # Integration tests
+├── Dockerfile                  # Docker image build
+├── docker-compose.yml          # Local development setup
+├── pom.xml                     # Maven dependencies
+├── .env.example                # Environment variables template
+└── README.md                   # This file
 ```
 
-## Installation
+## 📦 Installation & Setup
 
 ### Prerequisites
-- Java 21 or higher
+- Java 21
 - Maven 3.8+
-- PostgreSQL 13+ (or use Docker)
+- PostgreSQL 13+ (or Docker)
 - Git
+- Docker & Docker Compose (for containerized setup)
 
-### Local Development Setup
+### Local Development (with Docker)
+
+**Fastest way to get started:**
 
 1. **Clone repository:**
 ```bash
@@ -98,159 +129,251 @@ git clone https://github.com/softDevShishir/ecommerce-api.git
 cd ecommerce-api
 ```
 
-2. **Configure database:**
-   - Create PostgreSQL database: `ecommerce_db`
-   - Update `application.yml` with database credentials
-
-3. **Build project:**
+2. **Set up environment variables:**
 ```bash
-mvn clean install
+cp .env.example .env
+# Edit .env with your values if needed (defaults should work for local dev)
 ```
 
-4. **Run application:**
-```bash
-mvn spring-boot:run
-```
-
-Application will start on `http://localhost:8080`
-
-## Docker Setup
-
-### Quick Start with Docker Compose
-
-1. **Build and run services:**
+3. **Start services with Docker Compose:**
 ```bash
 docker-compose up -d
 ```
 
-This will:
-- Start PostgreSQL on port 5432
-- Load database schema automatically
-- Start Spring Boot API on port 8080
-
-2. **Access application:**
-- API: http://localhost:8080
-- Database: localhost:5432
-
-3. **Stop services:**
+4. **Verify services are running:**
 ```bash
-docker-compose down
+curl http://localhost:8080/swagger-ui.html
+curl http://localhost:8080/v3/api-docs
 ```
 
-### Environment Variables
+The API will be available at `http://localhost:8080`
 
-Database credentials can be customized in `docker-compose.yml`:
-- `POSTGRES_DB=ecommerce_db`
-- `POSTGRES_USER=ecommerce_user`
-- `POSTGRES_PASSWORD=ecommerce_password`
+### Local Development (without Docker)
 
-## Database Schema
+**If you prefer running locally:**
+
+1. **Install PostgreSQL:**
+   - Create database: `createdb ecommerce_db`
+   - Create user: `createuser ecommerce_user`
+   - Set password: `ALTER ROLE ecommerce_user WITH PASSWORD 'ecommerce_password';`
+   - Grant privileges: `GRANT ALL PRIVILEGES ON DATABASE ecommerce_db TO ecommerce_user;`
+
+2. **Build project:**
+```bash
+mvn clean install
+```
+
+3. **Run application:**
+```bash
+mvn spring-boot:run
+```
+
+4. **Access API:**
+   - Swagger UI: http://localhost:8080/swagger-ui.html
+   - API Docs: http://localhost:8080/v3/api-docs
+
+## 🔌 API Endpoints
+
+### Authentication
+- `POST /api/v1/auth/register` - Register new user
+- `POST /api/v1/auth/login` - Login and get JWT token
+- `GET /api/v1/auth/me` - Get current authenticated user
+
+### Users
+- `GET /api/v1/users` - Get all users (ADMIN only)
+- `GET /api/v1/users/{id}` - Get user by ID
+- `PUT /api/v1/users/{id}` - Update user profile
+
+### Products
+- `GET /api/v1/products` - Get all products (with search/filter)
+- `GET /api/v1/products/{id}` - Get product by ID
+- `POST /api/v1/products` - Create product (ADMIN only)
+- `PUT /api/v1/products/{id}` - Update product (ADMIN only)
+- `DELETE /api/v1/products/{id}` - Delete product (ADMIN only)
+
+### Orders
+- `GET /api/v1/orders` - Get user's orders
+- `GET /api/v1/orders/{id}` - Get order by ID
+- `POST /api/v1/orders` - Create order from cart
+- `PUT /api/v1/orders/{id}/status` - Update order status (ADMIN only)
+
+### Shopping Cart
+- `GET /api/v1/cart` - Get user's cart
+- `POST /api/v1/cart/items` - Add item to cart
+- `PUT /api/v1/cart/items/{cartItemId}` - Update cart item quantity
+- `DELETE /api/v1/cart/items/{cartItemId}` - Remove item from cart
+- `DELETE /api/v1/cart` - Clear cart
+
+## 🔐 Authentication
+
+The API uses JWT (JSON Web Tokens) for stateless authentication.
+
+### Getting a Token
+
+1. **Register new user:**
+```bash
+curl -X POST http://localhost:8080/api/v1/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "user@example.com",
+    "password": "password123",
+    "firstName": "John",
+    "lastName": "Doe"
+  }'
+```
+
+2. **Login:**
+```bash
+curl -X POST http://localhost:8080/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "user@example.com",
+    "password": "password123"
+  }'
+```
+
+Response includes JWT token:
+```json
+{
+  "token": "eyJhbGciOiJIUzUxMiJ9...",
+  "type": "Bearer",
+  "userId": 1,
+  "email": "user@example.com",
+  "role": "USER",
+  "expiresIn": 86400
+}
+```
+
+### Using the Token
+
+Include token in Authorization header:
+```bash
+curl -H "Authorization: Bearer <your-token>" \
+  http://localhost:8080/api/v1/cart
+```
+
+## 📊 Database Schema
 
 **Tables:**
-- `users` - User accounts with roles
+- `users` - User accounts with roles (ADMIN, USER)
 - `products` - Product catalog
 - `orders` - Order records
 - `order_items` - Items in each order
 - `cart` - Shopping cart per user
 - `cart_items` - Items in cart
 
-**Relationships:**
-- One User → Many Orders
-- One User → One Cart
-- One Order → Many OrderItems
-- One Product → Many OrderItems
-- One Cart → Many CartItems
+**Key Features:**
+- Automatic timestamps (created_at, updated_at)
+- Foreign key relationships with cascade delete
+- Indexes on frequently searched columns for performance
+- Native Postgres enum types for roles and order status
 
-## API Endpoints (Preview)
+## 🧪 Testing
 
-### Authentication
-- `POST /api/auth/register` - User registration
-- `POST /api/auth/login` - User login (returns JWT token)
-
-### Products
-- `GET /api/products` - Get all products (with filters)
-- `GET /api/products/{id}` - Get product by ID
-- `POST /api/products` - Create product (ADMIN only)
-- `PUT /api/products/{id}` - Update product (ADMIN only)
-- `DELETE /api/products/{id}` - Delete product (ADMIN only)
-
-### Orders
-- `GET /api/orders` - Get user's orders
-- `POST /api/orders` - Create new order
-- `GET /api/orders/{id}` - Get order details
-- `PUT /api/orders/{id}/status` - Update order status (ADMIN only)
-
-### Cart
-- `GET /api/cart` - Get user's cart
-- `POST /api/cart/items` - Add item to cart
-- `DELETE /api/cart/items/{itemId}` - Remove item from cart
-
-## Authentication
-
-API uses JWT (JSON Web Tokens) for stateless authentication.
-
-**Getting a Token:**
-```bash
-curl -X POST http://localhost:8080/api/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"email":"user@example.com","password":"password123"}'
-```
-
-**Using Token:**
-```bash
-curl -H "Authorization: Bearer <your_jwt_token>" \
-  http://localhost:8080/api/products
-```
-
-## Testing
-
-Run unit tests:
+### Run all tests:
 ```bash
 mvn test
 ```
 
-## Deployment
+### Run specific test class:
+```bash
+mvn test -Dtest=AuthControllerIntegrationTest
+```
 
-### Build Docker Image
+### Test coverage:
+- 22 integration tests
+- Tests for authentication, products, and cart
+- Both success and failure scenarios
+- Proper status codes and error handling
+
+## 🚀 Deployment
+
+See [DEPLOYMENT.md](DEPLOYMENT.md) for the full deployment guide.
+
+### Deploy to Render/Railway (Free tier)
+
+1. **Push to GitHub:**
+```bash
+git push origin main
+```
+
+2. **Connect repository to deployment platform:**
+   - Go to Render.com or Railway.app
+   - Connect your GitHub repository
+   - Set environment variables (DB credentials, JWT_SECRET, etc.)
+   - Deploy
+
+3. **Environment variables for production:**
+   - `DB_HOST` - PostgreSQL host
+   - `DB_PORT` - PostgreSQL port
+   - `DB_NAME` - Database name
+   - `DB_USERNAME` - Database user
+   - `DB_PASSWORD` - Database password
+   - `JWT_SECRET` - Secret key for JWT (min 256 bits)
+   - `JWT_EXPIRATION` - Token expiration time (default: 86400000 ms)
+   - `SPRING_PROFILES_ACTIVE` - Set to `prod`
+
+### Build Docker image:
 ```bash
 docker build -t ecommerce-api:latest .
 ```
 
-### Push to Docker Registry
+### Push to Docker Hub:
 ```bash
-docker tag ecommerce-api:latest <your-registry>/ecommerce-api:latest
-docker push <your-registry>/ecommerce-api:latest
+docker tag ecommerce-api:latest <your-username>/ecommerce-api:latest
+docker push <your-username>/ecommerce-api:latest
 ```
 
-## Architecture Highlights
+## 📝 API Documentation
 
-- **Module-wise Organization** - Each feature (user, product, order, cart) is a separate module
-- **AuditData Base Class** - All entities inherit createdAt/updatedAt timestamps
-- **Repository Pattern** - Spring Data JPA for data access
-- **Security** - JWT authentication with role-based authorization
-- **Docker Support** - Production-ready containerization
+### Swagger UI
+Access interactive API documentation at:
+- Local: http://localhost:8080/swagger-ui.html
+- Try out endpoints directly from the UI
+- See request/response examples
+- Download OpenAPI spec
 
-## Performance Features
+### OpenAPI Spec
+Full OpenAPI specification available at:
+- http://localhost:8080/v3/api-docs
 
-- Database indexes on foreign keys and search columns
-- Pagination support for large datasets
-- Efficient queries with Spring Data JPA
-- Caching-ready architecture
+## 🏆 Key Features
 
-## Future Enhancements
+- **Stateless JWT Authentication** - Secure, scalable token-based auth
+- **Role-Based Access Control** - Different permissions for ADMIN and USER
+- **Module-Wise Architecture** - Clean separation of concerns
+- **AuditData Base Class** - Automatic timestamp tracking
+- **Global Exception Handling** - Consistent error responses
+- **Comprehensive Testing** - 22 integration tests
+- **Swagger Documentation** - Interactive API docs
+- **Docker Ready** - Containerized for easy deployment
+- **Multi-Profile Config** - Dev, test, and production configurations
+- **Production Ready** - Security best practices, logging, error handling
 
-- Payment gateway integration
-- Email notifications
-- Advanced reporting & analytics
-- API rate limiting
-- Cache layer (Redis)
-- Microservices architecture (split modules)
+## 🔒 Security Considerations
 
-## Contributing
+- Passwords encrypted with BCrypt
+- JWT tokens with 24-hour expiration
+- CORS configured for frontend
+- SQL injection prevention via JPA
+- CSRF protection (disabled for stateless API)
+- Role-based endpoint protection
+- Environment variables for secrets (no hardcoding)
+- Validation on all inputs
 
-This is a portfolio project. Feel free to fork and use as reference.
+## 🤝 Contributing
 
-## Author
+This is a portfolio project. Feel free to:
+- Fork and use as reference
+- Study the architecture and patterns
+- Modify for your own projects
+- Ask questions about the implementation
+
+## 📄 License
+
+MIT License - See LICENSE file for details
+
+## 👤 Author
 
 **Shishir**
 - GitHub: [github.com/softDevShishir](https://github.com/softDevShishir)
@@ -260,6 +383,26 @@ This is a portfolio project. Feel free to fork and use as reference.
 Backend Engineer specializing in REST APIs, Microservices, and Security.
 3.5 years of production experience.
 
-## License
+## 🎯 Future Enhancements
 
-MIT License
+- [ ] Payment gateway integration (Stripe, PayPal)
+- [ ] Email notifications for orders
+- [ ] Advanced reporting and analytics
+- [ ] API rate limiting
+- [ ] Redis caching layer
+- [ ] Microservices architecture (split modules)
+- [ ] GraphQL API support
+- [ ] Real-time notifications (WebSocket)
+- [ ] Admin dashboard
+- [ ] Mobile app API optimization
+
+## 📞 Support
+
+For issues, questions, or suggestions:
+- Open GitHub issues
+- Email: softdevshishir@gmail.com
+- Check API documentation at `/swagger-ui.html`
+
+---
+
+**Happy coding! 🚀**
