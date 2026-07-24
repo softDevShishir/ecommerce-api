@@ -134,6 +134,29 @@
 
     <build>
         <plugins>
+            <!-- Lombok 1.18.32 (pulled in transitively) doesn't support annotation
+                 processing under JDK 25's compiler internals; pin the build to a
+                 JDK 21 toolchain regardless of which JDK invokes mvn. Requires a
+                 <toolchain><jdk><version>21</version> entry in ~/.m2/toolchains.xml. -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-toolchains-plugin</artifactId>
+                <version>3.2.0</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>toolchain</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <toolchains>
+                        <jdk>
+                            <version>21</version>
+                        </jdk>
+                    </toolchains>
+                </configuration>
+            </plugin>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>

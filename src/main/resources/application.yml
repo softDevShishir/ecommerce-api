@@ -1,36 +1,53 @@
-server:
-  port: 8080
-
 spring:
   application:
     name: ecommerce-api
 
   datasource:
-    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:ecommerce_db}
-    username: ${DB_USERNAME:postgres}
-    password: ${DB_PASSWORD:postgres}
+    url: jdbc:postgresql://localhost:5432/ecommerce_db
+    username: ecommerce_user
+    password: ecommerce_password
     driver-class-name: org.postgresql.Driver
-    hikari:
-      maximum-pool-size: 10
-      minimum-idle: 2
-      connection-timeout: 30000
-      idle-timeout: 600000
-      max-lifetime: 1800000
 
   jpa:
     hibernate:
-      ddl-auto: validate
+      ddl-auto: update
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
     show-sql: false
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: true
-        default_schema: public
+        jdbc:
+          batch_size: 20
+        order_inserts: true
+        order_updates: true
     open-in-view: false
 
-  sql:
-    init:
-      mode: never
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+
+  jackson:
+    default-property-inclusion: non_null
+    serialization:
+      write-dates-as-timestamps: false
+
+server:
+  port: 8080
+  servlet:
+    context-path: /
+  error:
+    include-message: always
+    include-binding-errors: always
+
+logging:
+  level:
+    root: INFO
+    com.shishir.ecommerce: DEBUG
+    org.springframework.web: INFO
+    org.hibernate.SQL: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
 
 springdoc:
   api-docs:
@@ -41,56 +58,19 @@ springdoc:
     display-request-duration: true
     operations-sorter: method
     tags-sorter: alpha
+    doc-expansion: list
   show-actuator: false
 
-logging:
-  level:
-    com.shishir.ecommerce: INFO
-    org.springframework.security: WARN
-    org.hibernate.SQL: WARN
-  pattern:
-    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+jwt:
+  secret: your-secret-key-min-256-bits-long-for-production-change-this
+  expiration: 86400000
 
+# Consumed by SecurityConfig; the base task spec omitted this block, but
+# SecurityConfig has no defaults for it and startup fails without it.
 app:
-  jwt:
-    secret: ${JWT_SECRET:change-me-in-production-use-at-least-256-bit-secret-key}
-    expiration-ms: ${JWT_EXPIRATION_MS:86400000}       # 24 hours
-    refresh-expiration-ms: ${JWT_REFRESH_EXPIRATION_MS:604800000}  # 7 days
-
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:4200}
     allowed-methods: GET,POST,PUT,PATCH,DELETE,OPTIONS
     allowed-headers: "*"
     allow-credentials: true
     max-age: 3600
-
----
-spring:
-  config:
-    activate:
-      on-profile: dev
-
-  jpa:
-    show-sql: true
-    hibernate:
-      ddl-auto: update
-
-logging:
-  level:
-    com.shishir.ecommerce: DEBUG
-    org.hibernate.SQL: DEBUG
-
----
-spring:
-  config:
-    activate:
-      on-profile: prod
-
-  jpa:
-    hibernate:
-      ddl-auto: validate
-
-logging:
-  level:
-    com.shishir.ecommerce: WARN
-    root: ERROR

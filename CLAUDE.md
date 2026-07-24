@@ -29,20 +29,26 @@ mvn verify                 # build + tests, what CI runs
 
 The `@SpringBootApplication` entry point is `EcommerceApiApplication` (root `com.shishir.ecommerce` package) — `@SpringBootTest` needs it to find a configuration class, so don't remove/relocate it without checking test bootstrapping still works.
 
+The `pom.xml` pins compilation to a JDK 21 toolchain via `maven-toolchains-plugin`, resolved from `~/.m2/toolchains.xml` (`<jdk><version>21</version>` → a local JDK 21 install) — Lombok 1.18.32, pulled in transitively via the Spring Boot 3.3 parent, doesn't support annotation processing under newer JDKs (e.g. JDK 25), so `mvn` running under a newer default `JAVA_HOME` would otherwise fail to compile. This means `mvn compile`/`test`/etc. need a machine-local `toolchains.xml` entry for JDK 21 to work — CI doesn't have one configured, so if the `./mvnw` gap above ever gets fixed, CI will also need a `toolchains.xml` (or the plugin removed in favor of a JDK-21-pinned runner).
+
 ### Local database
 
 ```bash
-docker-compose up -d           # Postgres + API, schema.sql auto-loaded into a fresh volume only
+docker-compose up -d           # Postgres + API, schema.sql/data.sql auto-loaded into a fresh volume only
 docker-compose down
 ```
 
-For `mvn spring-boot:run` against a manually-created `ecommerce_db` Postgres instance, apply `src/main/resources/database/schema.sql` yourself first — the `default` and `prod` Spring profiles use `ddl-auto: validate` (Hibernate checks the schema but never creates/alters it). Only the `dev` profile (`application-dev.yml`) uses `ddl-auto: update`.
+`docker-compose.yml` mounts `schema.sql`/`data.sql` into Postgres's `docker-entrypoint-initdb.d` as `01-schema.sql`/`02-data.sql` — the numeric prefixes force alphabetical run order so `data.sql` inserts after the tables exist. This only runs once, against a fresh `postgres_data` volume.
 
-Key env vars (see `application.yml`): `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USERNAME`, `DB_PASSWORD`, `JWT_SECRET`, `JWT_EXPIRATION_MS`, `CORS_ALLOWED_ORIGINS`.
+The base (no-profile) config and `application-dev.yml` both use `ddl-auto: update`, so Hibernate creates/alters the schema itself on startup — including the `user_role`/`order_status` native Postgres enum types (see Data layer below), so `mvn spring-boot:run` against an empty `ecommerce_db` works with no manual schema step. Only `application-prod.yml` uses `ddl-auto: validate` (Hibernate checks the schema but never creates/alters it) — apply `src/main/resources/database/schema.sql` yourself first when running with `prod` active. `dev` and `prod` are standalone `application-{profile}.yml` files (Spring's per-profile file convention), not sections inside `application.yml`.
+
+Key env vars (see `application.yml`/`application-prod.yml`): `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USERNAME`, `DB_PASSWORD`, `JWT_SECRET`, `JWT_EXPIRATION_MS`, `CORS_ALLOWED_ORIGINS`.
 
 ### Running the integration tests
 
 `src/test/resources/application.yml` is a standalone config (it fully replaces `src/main/resources/application.yml` on the test classpath, not merges with it) pointing at a separate `ecommerce_test` database with `ddl-auto: create-drop`, so tests manage their own schema and never touch dev data. You need a real Postgres reachable with those settings — e.g. `docker run -d -e POSTGRES_DB=ecommerce_test -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres -p 5432:5432 postgres:16-alpine`, or override `DB_HOST`/`DB_PORT`/`DB_NAME`/`DB_USERNAME`/`DB_PASSWORD` env vars to point elsewhere (CI's `ci.yml` already provisions exactly this). `mvn test` picks it up with no extra flags once the database is reachable.
+
+On this machine, port 5432 is already bound by a native `postgresql.service` (unrelated), so the test DB container above was instead run as `docker run -d --name ecommerce_test_pg -e POSTGRES_DB=ecommerce_test -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres -p 5433:5432 postgres:16-alpine`, with `DB_PORT=5433` exported when invoking `mvn test`. That container is left running for reuse; `docker stop/rm ecommerce_test_pg` to tear it down.
 
 ## Architecture
 
@@ -51,7 +57,7 @@ Key env vars (see `application.yml`): `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USERN
 Code is organized **feature-first**, not layer-first: `user/`, `product/`, `order/`, `cart/` each contain their own `controller/`, `service/`, `repository/`, `entity/`, `dto/`. Cross-cutting concerns live in three shared packages instead:
 
 - `config/` — `Routes` (all endpoint path constants), `SecurityConfig`, `AuditData` (mapped-superclass for `createdAt`/`updatedAt`, extended by every entity).
-- `security/` — `JwtTokenProvider` (issues/parses HS512 JWTs, key = SHA-512 of `app.jwt.secret`), `JwtAuthenticationFilter` (populates `SecurityContextHolder` from the bearer token, never rejects the request itself), `JwtAuthenticationEntryPoint`/`JwtAccessDeniedHandler` (401/403 JSON responses), `CurrentUserProvider` (resolves the authenticated `User` — assumes the security principal name is the user's email), `UserRole` enum (`ADMIN`, `USER`).
+- `security/` — `JwtTokenProvider` (issues/parses HS512 JWTs, key = SHA-512 of `jwt.secret`), `JwtAuthenticationFilter` (populates `SecurityContextHolder` from the bearer token, never rejects the request itself), `JwtAuthenticationEntryPoint`/`JwtAccessDeniedHandler` (401/403 JSON responses), `CurrentUserProvider` (resolves the authenticated `User` — assumes the security principal name is the user's email), `UserRole` enum (`ADMIN`, `USER`).
 - `exception/` — one exception type per HTTP error case (`ResourceNotFoundException`, `DuplicateResourceException`, `BadRequestException`, `UnauthorizedException`, `ValidationException`) plus `GlobalExceptionHandler` (`@RestControllerAdvice`) that maps each to a shared `ExceptionResponse` JSON shape (`timestamp`, `status`, `error`, `message`, `path`, `details`).
 
 ### Routing
@@ -65,14 +71,14 @@ Code is organized **feature-first**, not layer-first: `user/`, `product/`, `orde
 ### Data layer
 
 - Entities use Lombok `@Data` + `@EqualsAndHashCode(callSuper = true)`, extend `AuditData`, and exclude relationship fields from `equals`/`hashCode`/`toString` (`@ToString.Exclude`/`@EqualsAndHashCode.Exclude`) to avoid recursive entity graphs.
-- Enums (`role`, order `status`) are persisted with `@Enumerated(EnumType.STRING)` and mirrored by a `CHECK` constraint in `schema.sql` — the schema file is the source of truth for constraints Hibernate's `validate` mode checks against, so schema and entity changes must be kept in sync manually.
+- Enums (`role`, order `status`) are persisted as native Postgres enum types (`user_role`, `order_status`, created in `schema.sql`), mapped via `@Enumerated(EnumType.STRING)` + `@JdbcTypeCode(SqlTypes.NAMED_ENUM)` — Hibernate 6's named-enum JDBC type, which infers the Postgres type name from the Java enum's simple name in snake_case. The schema file is the source of truth for constraints Hibernate's `validate` mode checks against, so schema and entity changes must be kept in sync manually. `products.name` is `UNIQUE` (backs `data.sql`'s `ON CONFLICT (name)` upsert).
 - Services are `@Transactional` by default, with `@Transactional(readOnly = true)` on read-only methods; they throw the `exception/` types directly rather than returning `Optional`/error codes.
 - Controllers map entities to response DTOs manually (Lombok `@Builder`), no MapStruct/ModelMapper.
 - `open-in-view` is disabled, so lazy `@OneToMany` associations (e.g. `Cart.cartItems`) can't be read after their owning `@Transactional` service method returns. `CartController` deliberately avoids touching `cart.getCartItems()` and instead queries items separately via `CartService.getCartItems()` — follow that pattern (a dedicated query) rather than reaching into a lazy collection from a controller, and rather than reassigning a `cascade = ALL, orphanRemoval = true` collection field directly (breaks Hibernate's orphan-removal tracking).
 
 ### Adding a new module or endpoint
 
-Follow the existing per-feature package shape (`controller`/`service`/`repository`/`entity`/`dto`), add path constants to `Routes`, wire authorization rules into `SecurityConfig.filterChain`, and add any new SQL constraints to `database/schema.sql` (remember `ddl-auto: validate` outside `dev`).
+Follow the existing per-feature package shape (`controller`/`service`/`repository`/`entity`/`dto`), add path constants to `Routes`, wire authorization rules into `SecurityConfig.filterChain`, and add any new SQL constraints to `database/schema.sql` (remember `ddl-auto: validate` under the `prod` profile).
 
 ### API documentation (Swagger / OpenAPI)
 

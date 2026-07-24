@@ -1,111 +1,88 @@
--- =============================================================================
--- E-Commerce API — PostgreSQL Schema
--- Database: ecommerce_db
--- =============================================================================
+-- This file is automatically executed on application startup
+-- It creates all tables if they don't exist
 
--- -----------------------------------------------------------------------------
--- USERS
--- Stores registered customer and admin accounts.
--- -----------------------------------------------------------------------------
+-- Drop existing enums if they exist (for fresh start)
+-- DROP TYPE IF EXISTS user_role CASCADE;
+-- DROP TYPE IF EXISTS order_status CASCADE;
+
+-- Create enum types
+CREATE TYPE user_role AS ENUM ('ADMIN', 'USER');
+CREATE TYPE order_status AS ENUM ('PENDING', 'CONFIRMED', 'SHIPPED', 'DELIVERED', 'CANCELLED');
+
+-- Users table
 CREATE TABLE IF NOT EXISTS users (
-    id         BIGSERIAL    PRIMARY KEY,
-    email      VARCHAR(255) NOT NULL UNIQUE,
-    password   VARCHAR(255) NOT NULL,
+    id BIGSERIAL PRIMARY KEY,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL,
     first_name VARCHAR(100),
-    last_name  VARCHAR(100),
-    role       VARCHAR(50)  NOT NULL DEFAULT 'USER'
-                            CHECK (role IN ('ADMIN', 'USER')),
-    created_at TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
-
--- -----------------------------------------------------------------------------
--- PRODUCTS
--- Catalogue of items available for purchase.
--- -----------------------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS products (
-    id               BIGSERIAL      PRIMARY KEY,
-    name             VARCHAR(255)   NOT NULL,
-    description      TEXT,
-    price            NUMERIC(10, 2) NOT NULL CHECK (price >= 0),
-    stock_quantity   INTEGER        NOT NULL DEFAULT 0 CHECK (stock_quantity >= 0),
-    category         VARCHAR(100),
-    created_at       TIMESTAMP      NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at       TIMESTAMP      NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
-
--- -----------------------------------------------------------------------------
--- ORDERS
--- Represents a purchase placed by a user.
--- -----------------------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS orders (
-    id          BIGSERIAL      PRIMARY KEY,
-    user_id     BIGINT         NOT NULL REFERENCES users(id),
-    order_date  TIMESTAMP      NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    total_price NUMERIC(10, 2) NOT NULL CHECK (total_price >= 0),
-    status      VARCHAR(50)    NOT NULL DEFAULT 'PENDING'
-                               CHECK (status IN ('PENDING', 'CONFIRMED', 'SHIPPED', 'DELIVERED', 'CANCELLED')),
-    created_at  TIMESTAMP      NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at  TIMESTAMP      NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
-
--- -----------------------------------------------------------------------------
--- ORDER_ITEMS
--- Line items belonging to an order.
--- Cascade-deleted when their parent order is removed.
--- -----------------------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS order_items (
-    id         BIGSERIAL      PRIMARY KEY,
-    order_id   BIGINT         NOT NULL REFERENCES orders(id)   ON DELETE CASCADE,
-    product_id BIGINT         NOT NULL REFERENCES products(id),
-    quantity   INTEGER        NOT NULL CHECK (quantity > 0),
-    price      NUMERIC(10, 2) NOT NULL CHECK (price >= 0)
-);
-
--- -----------------------------------------------------------------------------
--- CART
--- One shopping cart per user (1-to-1).
--- Cascade-deleted when the owning user is removed.
--- -----------------------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS cart (
-    id         BIGSERIAL PRIMARY KEY,
-    user_id    BIGINT    NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+    last_name VARCHAR(100),
+    role user_role NOT NULL DEFAULT 'USER',
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
--- -----------------------------------------------------------------------------
--- CART_ITEMS
--- Products held in a cart.
--- Cascade-deleted when their parent cart is removed.
--- -----------------------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS cart_items (
-    id         BIGSERIAL PRIMARY KEY,
-    cart_id    BIGINT    NOT NULL REFERENCES cart(id)     ON DELETE CASCADE,
-    product_id BIGINT    NOT NULL REFERENCES products(id),
-    quantity   INTEGER   NOT NULL CHECK (quantity > 0),
-    UNIQUE (cart_id, product_id)
+-- Products table
+-- name is UNIQUE so data.sql's ON CONFLICT (name) upsert has a constraint to target.
+CREATE TABLE IF NOT EXISTS products (
+    id BIGSERIAL PRIMARY KEY,
+    name VARCHAR(255) UNIQUE NOT NULL,
+    description TEXT,
+    price NUMERIC(10, 2) NOT NULL,
+    stock_quantity INTEGER NOT NULL,
+    category VARCHAR(100),
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
--- =============================================================================
--- INDEXES
--- =============================================================================
+-- Orders table
+CREATE TABLE IF NOT EXISTS orders (
+    id BIGSERIAL PRIMARY KEY,
+    user_id BIGINT NOT NULL,
+    order_date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    total_price NUMERIC(10, 2) NOT NULL,
+    status order_status NOT NULL DEFAULT 'PENDING',
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
 
--- users
-CREATE INDEX IF NOT EXISTS idx_users_email         ON users(email);
+-- Order items table
+CREATE TABLE IF NOT EXISTS order_items (
+    id BIGSERIAL PRIMARY KEY,
+    order_id BIGINT NOT NULL,
+    product_id BIGINT NOT NULL,
+    quantity INTEGER NOT NULL,
+    price NUMERIC(10, 2) NOT NULL,
+    FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
+    FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE RESTRICT
+);
 
--- products
-CREATE INDEX IF NOT EXISTS idx_products_name       ON products(name);
-CREATE INDEX IF NOT EXISTS idx_products_category   ON products(category);
+-- Cart table
+CREATE TABLE IF NOT EXISTS cart (
+    id BIGSERIAL PRIMARY KEY,
+    user_id BIGINT NOT NULL UNIQUE,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
 
--- orders
-CREATE INDEX IF NOT EXISTS idx_orders_user_id      ON orders(user_id);
-CREATE INDEX IF NOT EXISTS idx_orders_status       ON orders(status);
+-- Cart items table
+CREATE TABLE IF NOT EXISTS cart_items (
+    id BIGSERIAL PRIMARY KEY,
+    cart_id BIGINT NOT NULL,
+    product_id BIGINT NOT NULL,
+    quantity INTEGER NOT NULL,
+    FOREIGN KEY (cart_id) REFERENCES cart(id) ON DELETE CASCADE,
+    FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE RESTRICT
+);
 
--- order_items
-CREATE INDEX IF NOT EXISTS idx_order_items_order   ON order_items(order_id);
-CREATE INDEX IF NOT EXISTS idx_order_items_product ON order_items(product_id);
-
--- cart_items
-CREATE INDEX IF NOT EXISTS idx_cart_items_cart     ON cart_items(cart_id);
-CREATE INDEX IF NOT EXISTS idx_cart_items_product  ON cart_items(product_id);
+-- Create indexes for performance
+CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+CREATE INDEX IF NOT EXISTS idx_products_category ON products(category);
+CREATE INDEX IF NOT EXISTS idx_orders_user_id ON orders(user_id);
+CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(status);
+CREATE INDEX IF NOT EXISTS idx_order_items_order_id ON order_items(order_id);
+CREATE INDEX IF NOT EXISTS idx_order_items_product_id ON order_items(product_id);
+CREATE INDEX IF NOT EXISTS idx_cart_user_id ON cart(user_id);
+CREATE INDEX IF NOT EXISTS idx_cart_items_cart_id ON cart_items(cart_id);
+CREATE INDEX IF NOT EXISTS idx_cart_items_product_id ON cart_items(product_id);
