@@ -8,7 +8,6 @@ import com.shishir.ecommerce.exception.ResourceNotFoundException;
 import com.shishir.ecommerce.order.entity.Order;
 import com.shishir.ecommerce.order.entity.OrderItem;
 import com.shishir.ecommerce.order.entity.OrderStatus;
-import com.shishir.ecommerce.order.repository.OrderItemRepository;
 import com.shishir.ecommerce.order.repository.OrderRepository;
 import com.shishir.ecommerce.product.entity.Product;
 import com.shishir.ecommerce.product.repository.ProductRepository;
@@ -27,16 +26,13 @@ import java.util.List;
 public class OrderService {
 
     private final OrderRepository orderRepository;
-    private final OrderItemRepository orderItemRepository;
     private final UserRepository userRepository;
     private final ProductRepository productRepository;
     private final CartRepository cartRepository;
 
-    public OrderService(OrderRepository orderRepository, OrderItemRepository orderItemRepository,
-                         UserRepository userRepository, ProductRepository productRepository,
-                         CartRepository cartRepository) {
+    public OrderService(OrderRepository orderRepository, UserRepository userRepository,
+                         ProductRepository productRepository, CartRepository cartRepository) {
         this.orderRepository = orderRepository;
-        this.orderItemRepository = orderItemRepository;
         this.userRepository = userRepository;
         this.productRepository = productRepository;
         this.cartRepository = cartRepository;
@@ -58,7 +54,6 @@ public class OrderService {
         order.setUser(user);
         order.setOrderDate(LocalDateTime.now());
         order.setStatus(OrderStatus.PENDING);
-        Order savedOrder = orderRepository.save(order);
 
         List<OrderItem> orderItems = new ArrayList<>();
         BigDecimal totalPrice = BigDecimal.ZERO;
@@ -72,7 +67,7 @@ public class OrderService {
             }
 
             OrderItem orderItem = new OrderItem();
-            orderItem.setOrder(savedOrder);
+            orderItem.setOrder(order);
             orderItem.setProduct(product);
             orderItem.setQuantity(quantity);
             orderItem.setPrice(product.getPrice());
@@ -84,11 +79,11 @@ public class OrderService {
             totalPrice = totalPrice.add(product.getPrice().multiply(BigDecimal.valueOf(quantity)));
         }
 
-        orderItemRepository.saveAll(orderItems);
-
-        savedOrder.setOrderItems(orderItems);
-        savedOrder.setTotalPrice(totalPrice);
-        orderRepository.save(savedOrder);
+        // total_price is NOT NULL in schema.sql, so it must be set before the first
+        // insert rather than backfilled after — order_items cascade-persist with it.
+        order.setOrderItems(orderItems);
+        order.setTotalPrice(totalPrice);
+        Order savedOrder = orderRepository.save(order);
 
         cart.getCartItems().clear();
         cartRepository.save(cart);
@@ -98,7 +93,7 @@ public class OrderService {
 
     @Transactional(readOnly = true)
     public Order getOrderById(Long id) {
-        return orderRepository.findById(id)
+        return orderRepository.findByIdWithItems(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Order with id " + id + " not found"));
     }
 
@@ -107,7 +102,7 @@ public class OrderService {
         userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User with id " + userId + " not found"));
 
-        List<Order> orders = orderRepository.findByUserId(userId);
+        List<Order> orders = orderRepository.findByUserIdWithItems(userId);
         if (orders.isEmpty()) {
             throw new ResourceNotFoundException("No orders found for user id " + userId);
         }

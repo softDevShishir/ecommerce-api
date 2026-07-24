@@ -7,10 +7,8 @@ import org.springframework.stereotype.Component;
 
 /**
  * Resolves the authenticated caller from Spring Security's context, assuming
- * the principal name is the user's email. That assumption only holds once a
- * JWT filter populates the context that way — no SecurityConfig/filter
- * exists in this project yet, so this reflects whatever principal Spring
- * Security's default auto-configuration puts in place until then.
+ * the principal name is the user's email — holds only because
+ * {@link JwtAuthenticationFilter} populates the context that way.
  */
 @Component
 public class CurrentUserProvider {

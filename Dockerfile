@@ -6,6 +6,23 @@ WORKDIR /app
 COPY pom.xml .
 COPY src ./src
 
+# pom.xml pins compilation to a JDK 21 toolchain (see CLAUDE.md); this image's
+# only JDK is 21, but maven-toolchains-plugin still needs a toolchains.xml
+# entry pointing at it, which isn't present by default.
+RUN mkdir -p /root/.m2 && printf '%s\n' \
+  '<?xml version="1.0" encoding="UTF-8"?>' \
+  '<toolchains>' \
+  '  <toolchain>' \
+  '    <type>jdk</type>' \
+  '    <provides>' \
+  '      <version>21</version>' \
+  '    </provides>' \
+  '    <configuration>' \
+  "      <jdkHome>${JAVA_HOME}</jdkHome>" \
+  '    </configuration>' \
+  '  </toolchain>' \
+  '</toolchains>' > /root/.m2/toolchains.xml
+
 RUN mvn clean package -DskipTests
 
 FROM eclipse-temurin:21-jre-alpine

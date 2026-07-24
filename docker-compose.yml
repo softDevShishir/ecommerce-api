@@ -13,7 +13,7 @@ services:
       POSTGRES_USER: ${DB_USERNAME:-ecommerce_user}
       POSTGRES_PASSWORD: ${DB_PASSWORD:-ecommerce_password}
     ports:
-      - "5432:5432"
+      - "${DB_PORT:-5434}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./src/main/resources/database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
