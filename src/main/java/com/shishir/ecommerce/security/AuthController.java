@@ -4,7 +4,6 @@ import com.shishir.ecommerce.config.Routes;
 import com.shishir.ecommerce.user.dto.UserLoginRequest;
 import com.shishir.ecommerce.user.dto.UserRegisterRequest;
 import com.shishir.ecommerce.user.dto.UserResponse;
-import com.shishir.ecommerce.user.entity.User;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -48,18 +47,6 @@ public class AuthController {
         String token = authService.extractTokenFromHeader(authHeader);
         String email = jwtTokenProvider.getEmailFromToken(token);
         log.info("GET {} email={}", Routes.AUTH_ME, email);
-        User user = authService.getCurrentUser(email);
-        return ResponseEntity.ok(toResponse(user));
-    }
-
-    private UserResponse toResponse(User user) {
-        return UserResponse.builder()
-                .id(user.getId())
-                .email(user.getEmail())
-                .firstName(user.getFirstName())
-                .lastName(user.getLastName())
-                .role(user.getRole())
-                .createdAt(user.getCreatedAt())
-                .build();
+        return ResponseEntity.ok(UserResponse.from(authService.getCurrentUser(email)));
     }
 }

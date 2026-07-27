@@ -51,11 +51,10 @@ public class AuthService {
         return authHeader.substring(BEARER_PREFIX.length());
     }
 
-    public LoginResponse generateLoginResponse(User user) {
+    private LoginResponse generateLoginResponse(User user) {
         String token = jwtTokenProvider.generateToken(user.getEmail(), user.getId().toString(), user.getRole());
         return LoginResponse.builder()
                 .token(token)
-                .type("Bearer")
                 .userId(user.getId())
                 .email(user.getEmail())
                 .role(user.getRole())

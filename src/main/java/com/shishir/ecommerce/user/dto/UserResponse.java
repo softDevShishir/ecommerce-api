@@ -1,6 +1,7 @@
 package com.shishir.ecommerce.user.dto;
 
 import com.shishir.ecommerce.security.UserRole;
+import com.shishir.ecommerce.user.entity.User;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -36,4 +37,15 @@ public class UserResponse {
 
     @Schema(description = "Account creation time")
     private LocalDateTime createdAt;
+
+    public static UserResponse from(User user) {
+        return UserResponse.builder()
+                .id(user.getId())
+                .email(user.getEmail())
+                .firstName(user.getFirstName())
+                .lastName(user.getLastName())
+                .role(user.getRole())
+                .createdAt(user.getCreatedAt())
+                .build();
+    }
 }

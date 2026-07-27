@@ -35,7 +35,7 @@ public class SwaggerConfig {
                                 .url("https://opensource.org/licenses/MIT")))
                 .servers(List.of(
                         new Server().url("http://localhost:8080").description("Local development server"),
-                        new Server().url("https://api.example.com").description("Production server")))
+                        new Server().url("https://ecommerce-api-9236.onrender.com").description("Production server")))
                 .components(new Components()
                         .addSecuritySchemes(BEARER_SECURITY_SCHEME, new SecurityScheme()
                                 .type(SecurityScheme.Type.HTTP)

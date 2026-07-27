@@ -72,10 +72,6 @@ public class OrderController {
         return ResponseEntity.ok(orderService.getOrdersByUserId(userId).stream().map(this::toResponse).toList());
     }
 
-    /**
-     * TODO: restrict to ADMIN once method security ({@code @EnableMethodSecurity}
-     * + a real SecurityConfig) is wired up — there is currently no enforcement here.
-     */
     @PutMapping(Routes.ORDER_STATUS)
     @Operation(summary = "Update order status", description = "Update order status (ADMIN only)")
     @ApiResponse(responseCode = "200", description = "Order status updated")

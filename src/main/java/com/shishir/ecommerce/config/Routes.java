@@ -17,12 +17,10 @@ public final class Routes {
 
     public static final String USERS = V1 + "/users";
     public static final String USER_REGISTER = USERS + "/register";
-    public static final String USER_LOGIN = USERS + "/login";
     public static final String USER_BY_ID = USERS + "/{id}";
 
     public static final String PRODUCTS = V1 + "/products";
     public static final String PRODUCT_BY_ID = PRODUCTS + "/{id}";
-    public static final String PRODUCT_SEARCH = PRODUCTS + "/search";
 
     public static final String ORDERS = V1 + "/orders";
     public static final String ORDER_BY_ID = ORDERS + "/{id}";

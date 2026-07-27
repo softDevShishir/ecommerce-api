@@ -58,11 +58,6 @@ public class UserService {
     }
 
     @Transactional(readOnly = true)
-    public boolean existsByEmail(String email) {
-        return userRepository.existsByEmail(email);
-    }
-
-    @Transactional(readOnly = true)
     public List<User> getAll() {
         return userRepository.findAll();
     }

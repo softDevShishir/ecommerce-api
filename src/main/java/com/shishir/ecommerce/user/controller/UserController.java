@@ -46,7 +46,7 @@ public class UserController {
         log.info("POST {} email={}", Routes.USER_REGISTER, request.getEmail());
         User user = userService.registerUser(
                 request.getEmail(), request.getPassword(), request.getFirstName(), request.getLastName());
-        return ResponseEntity.status(HttpStatus.CREATED).body(toResponse(user));
+        return ResponseEntity.status(HttpStatus.CREATED).body(UserResponse.from(user));
     }
 
     @GetMapping(Routes.USER_BY_ID)
@@ -56,7 +56,7 @@ public class UserController {
     @ApiResponse(responseCode = "404", description = "User not found")
     public ResponseEntity<UserResponse> getById(@PathVariable Long id) {
         log.info("GET {} id={}", Routes.USER_BY_ID, id);
-        return ResponseEntity.ok(toResponse(userService.getUserById(id)));
+        return ResponseEntity.ok(UserResponse.from(userService.getUserById(id)));
     }
 
     @PutMapping(Routes.USER_BY_ID)
@@ -67,7 +67,7 @@ public class UserController {
     public ResponseEntity<UserResponse> update(@PathVariable Long id, @Valid @RequestBody UserUpdateRequest request) {
         log.info("PUT {} id={}", Routes.USER_BY_ID, id);
         User user = userService.updateUser(id, request.getFirstName(), request.getLastName());
-        return ResponseEntity.ok(toResponse(user));
+        return ResponseEntity.ok(UserResponse.from(user));
     }
 
     @GetMapping(Routes.USERS)
@@ -76,17 +76,6 @@ public class UserController {
             content = @Content(mediaType = "application/json", array = @ArraySchema(schema = @Schema(implementation = UserResponse.class))))
     public ResponseEntity<List<UserResponse>> getAll() {
         log.info("GET {}", Routes.USERS);
-        return ResponseEntity.ok(userService.getAll().stream().map(this::toResponse).toList());
-    }
-
-    private UserResponse toResponse(User user) {
-        return UserResponse.builder()
-                .id(user.getId())
-                .email(user.getEmail())
-                .firstName(user.getFirstName())
-                .lastName(user.getLastName())
-                .role(user.getRole())
-                .createdAt(user.getCreatedAt())
-                .build();
+        return ResponseEntity.ok(userService.getAll().stream().map(UserResponse::from).toList());
     }
 }

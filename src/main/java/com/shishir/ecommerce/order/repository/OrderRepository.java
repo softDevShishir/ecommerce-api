@@ -13,11 +13,7 @@ import java.util.Optional;
 @Repository
 public interface OrderRepository extends JpaRepository<Order, Long> {
 
-    List<Order> findByUserId(Long userId);
-
     List<Order> findByStatus(OrderStatus status);
-
-    List<Order> findByUserIdOrderByOrderDateDesc(Long userId);
 
     // open-in-view is disabled, so callers that read order.getOrderItems() outside the
     // service's transaction (e.g. controllers mapping to a response DTO) need it fetched here.

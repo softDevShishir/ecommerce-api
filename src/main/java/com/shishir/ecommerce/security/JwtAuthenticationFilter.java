@@ -51,7 +51,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
                 SecurityContextHolder.getContext().setAuthentication(authentication);
-                log.info("User {} authenticated", email);
+                log.debug("User {} authenticated", email);
             }
         } catch (Exception ex) {
             // Never block the chain on a parsing failure — leave the context
