@@ -124,6 +124,9 @@ public class ProductController {
     }
 
     private ProductResponse toResponse(Product product) {
+        var ratingStats = productService.getRatingStats(product.getId());
+        Double averageRating = ratingStats.getAverageRating();
+
         return ProductResponse.builder()
                 .id(product.getId())
                 .name(product.getName())
@@ -133,6 +136,8 @@ public class ProductController {
                 .category(product.getCategory())
                 .createdAt(product.getCreatedAt())
                 .updatedAt(product.getUpdatedAt())
+                .averageRating(averageRating == null ? 0.0 : Math.round(averageRating * 10) / 10.0)
+                .totalReviews(ratingStats.getTotalReviews().intValue())
                 .build();
     }
 }

@@ -39,4 +39,10 @@ public class ProductResponse {
 
     @Schema(description = "Last update time")
     private LocalDateTime updatedAt;
+
+    @Schema(description = "Average review rating, 0-5", example = "4.5")
+    private Double averageRating;
+
+    @Schema(description = "Total number of reviews", example = "12")
+    private Integer totalReviews;
 }

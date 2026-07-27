@@ -4,6 +4,7 @@ import com.shishir.ecommerce.exception.BadRequestException;
 import com.shishir.ecommerce.exception.ResourceNotFoundException;
 import com.shishir.ecommerce.product.entity.Product;
 import com.shishir.ecommerce.product.repository.ProductRepository;
+import com.shishir.ecommerce.product.review.repository.ProductReviewRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,9 +16,11 @@ import java.util.List;
 public class ProductService {
 
     private final ProductRepository productRepository;
+    private final ProductReviewRepository productReviewRepository;
 
-    public ProductService(ProductRepository productRepository) {
+    public ProductService(ProductRepository productRepository, ProductReviewRepository productReviewRepository) {
         this.productRepository = productRepository;
+        this.productReviewRepository = productReviewRepository;
     }
 
     public Product createProduct(String name, String description, BigDecimal price,
@@ -96,6 +99,11 @@ public class ProductService {
     public void deleteProduct(Long id) {
         Product product = getProductById(id);
         productRepository.delete(product);
+    }
+
+    @Transactional(readOnly = true)
+    public ProductReviewRepository.RatingStats getRatingStats(Long productId) {
+        return productReviewRepository.getRatingStats(productId);
     }
 
     public void decreaseStock(Long productId, Integer quantity) {

@@ -70,7 +70,12 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, Routes.USER_REGISTER).permitAll()
                         .requestMatchers(HttpMethod.GET, Routes.PRODUCTS).permitAll()
                         .requestMatchers(HttpMethod.GET, Routes.PRODUCT_BY_ID).permitAll()
+                        .requestMatchers(HttpMethod.GET, Routes.PRODUCT_REVIEWS).permitAll()
+                        .requestMatchers(HttpMethod.GET, Routes.PRODUCT_RATING).permitAll()
                         .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
+                        // Must precede the DELETE .../products/** ADMIN-only rule below, since that
+                        // wildcard would otherwise also match review deletion and lock it to admins.
+                        .requestMatchers(HttpMethod.DELETE, Routes.PRODUCT_REVIEW_BY_ID).authenticated()
                         .requestMatchers(HttpMethod.DELETE, Routes.PRODUCTS + "/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PUT, Routes.ORDER_STATUS).hasRole("ADMIN")
                         .anyRequest().authenticated()

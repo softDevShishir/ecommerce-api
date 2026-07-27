@@ -21,6 +21,13 @@ public final class Routes {
 
     public static final String PRODUCTS = V1 + "/products";
     public static final String PRODUCT_BY_ID = PRODUCTS + "/{id}";
+    public static final String PRODUCT_RATING = PRODUCTS + "/{productId}/rating";
+
+    public static final String PRODUCT_REVIEWS = PRODUCTS + "/{productId}/reviews";
+    public static final String PRODUCT_REVIEW_BY_ID = PRODUCT_REVIEWS + "/{reviewId}";
+
+    public static final String REVIEWS = V1 + "/reviews";
+    public static final String MY_REVIEWS = REVIEWS + "/my-reviews";
 
     public static final String ORDERS = V1 + "/orders";
     public static final String ORDER_BY_ID = ORDERS + "/{id}";
