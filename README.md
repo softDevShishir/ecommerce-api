@@ -2,6 +2,72 @@
 
 A production-ready REST API for e-commerce applications built with Spring Boot 3.x and modern architecture patterns. Features secure user authentication with JWT, complete product catalog management, shopping cart functionality, and order management with role-based access control.
 
+## 🌐 Live Demo
+
+**API is live and accessible at:**
+- **Base URL:** https://ecommerce-api-9236.onrender.com
+- **Swagger UI:** https://ecommerce-api-9236.onrender.com/swagger-ui.html
+- **API Docs:** https://ecommerce-api-9236.onrender.com/v3/api-docs
+
+### Quick Start with Postman
+
+Import the provided Postman collection to test all API endpoints:
+
+1. **Download Postman:** https://www.postman.com/downloads/
+2. **Import Collection:**
+   - Open Postman
+   - Click "Import" button
+   - Select `postman/ecommerce-api.postman_collection.json` from this repository
+   - Collection will be imported with all endpoints pre-configured
+
+3. **Set Base URL:**
+   - In Postman, click the collection name
+   - Go to "Variables" tab
+   - Set `base_url` = `https://ecommerce-api-9236.onrender.com`
+   - Save
+
+4. **Start Testing:**
+   - Click any endpoint in the collection
+   - Click "Send"
+   - See the response instantly
+
+**Included in Postman Collection:**
+- ✅ User registration & login endpoints
+- ✅ Product CRUD operations & search
+- ✅ Shopping cart management
+- ✅ Order creation & tracking
+- ✅ Pre-configured JWT authentication
+- ✅ Sample requests with test data
+
+### Try the API with cURL
+
+**Register a new user:**
+```bash
+curl -X POST https://ecommerce-api-9236.onrender.com/api/v1/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "demo@example.com",
+    "password": "Demo123!",
+    "firstName": "Demo",
+    "lastName": "User"
+  }'
+```
+
+**Login:**
+```bash
+curl -X POST https://ecommerce-api-9236.onrender.com/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "demo@example.com",
+    "password": "Demo123!"
+  }'
+```
+
+**Get all products:**
+```bash
+curl https://ecommerce-api-9236.onrender.com/api/v1/products
+```
+
 ## 🚀 Features
 
 ### User Management
