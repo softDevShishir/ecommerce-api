@@ -130,9 +130,10 @@ Recommended:
 ### Schema
 
 There's no migration tool (Flyway/Liquibase) in this project. Schema management differs by profile:
-- **Default and `dev` profiles** use `ddl-auto: update` — Hibernate creates/alters the schema automatically on startup, including the native Postgres enum types (`user_role`, `order_status`) via `@JdbcTypeCode(SqlTypes.NAMED_ENUM)`.
-- **`prod` profile** uses `ddl-auto: validate` — Hibernate only checks the schema, it never creates or alters it. Apply `src/main/resources/database/schema.sql` yourself against the production database before first deploy.
-- `docker-compose.yml` mounts `schema.sql`/`data.sql` into Postgres's `docker-entrypoint-initdb.d`, so a fresh Docker-managed database gets both automatically — but only once, on an empty data volume.
+- **Default profile and `prod`** use `ddl-auto: validate` — Hibernate only checks the schema, it never creates or alters it. Apply `src/main/resources/database/schema.sql` yourself against the database before first deploy (any profile, not just `prod`).
+- **`dev` profile** uses `ddl-auto: create-drop` — Hibernate wipes and rebuilds the schema from the entities on every startup. Only safe because nothing persists across restarts on that profile; never point it at a database you want to keep data in.
+- `docker-compose.yml` mounts `schema.sql`/`data.sql` into Postgres's `docker-entrypoint-initdb.d`, so a fresh Docker-managed database gets both automatically — but only once, on an empty data volume. Its `app` service also runs `ddl-auto: validate` (overridden via `SPRING_JPA_HIBERNATE_DDL_AUTO`), relying on that automatic schema.sql application.
+- **Never run `ddl-auto: update` against a database with existing data.** The native Postgres enum types (`UserRole`/`OrderStatus`, via `@JdbcTypeCode(SqlTypes.NAMED_ENUM)`) are managed by Hibernate with an unconditional `DROP TYPE ... CASCADE` + `CREATE TYPE` on every single startup — not only when something changed. Against a populated table this cascades through the enum-typed column, then fails re-adding it `NOT NULL` (no default for existing rows), corrupting the table. This isn't a hypothetical: it's exactly what `update` mode used to do here before the config was switched to `validate`.
 
 ## Monitoring & Logs
 

@@ -2,12 +2,21 @@
 -- It creates all tables if they don't exist
 
 -- Drop existing enums if they exist (for fresh start)
--- DROP TYPE IF EXISTS user_role CASCADE;
--- DROP TYPE IF EXISTS order_status CASCADE;
+-- DROP TYPE IF EXISTS UserRole CASCADE;
+-- DROP TYPE IF EXISTS OrderStatus CASCADE;
 
--- Create enum types
-CREATE TYPE user_role AS ENUM ('ADMIN', 'USER');
-CREATE TYPE order_status AS ENUM ('PENDING', 'CONFIRMED', 'SHIPPED', 'DELIVERED', 'CANCELLED');
+-- Type names match the Java enum simple names (UserRole/OrderStatus), unquoted so Postgres folds
+-- them to userrole/orderstatus — this is what @JdbcTypeCode(SqlTypes.NAMED_ENUM) derives the
+-- native type name from (PostgreSQLEnumJdbcType uses the Java class's raw simple name, not a
+-- snake_case conversion; confirmed by decompiling it — no naming-strategy hook exists to steer
+-- this). The names matter beyond cosmetics: any persistent database MUST run under
+-- ddl-auto: validate (see application.yml/docker-compose.yml), never ddl-auto: update — Hibernate
+-- manages NAMED_ENUM types by unconditionally emitting DROP TYPE ... CASCADE + CREATE TYPE on
+-- every single startup (not just when something changed), which cascades through the column and
+-- then fails re-adding it NOT NULL against any existing rows, corrupting the table. validate mode
+-- never emits DDL, so schema.sql (here) is the only thing allowed to create/own these types.
+CREATE TYPE UserRole AS ENUM ('ADMIN', 'USER');
+CREATE TYPE OrderStatus AS ENUM ('PENDING', 'CONFIRMED', 'SHIPPED', 'DELIVERED', 'CANCELLED');
 
 -- Users table
 CREATE TABLE IF NOT EXISTS users (
@@ -16,7 +25,7 @@ CREATE TABLE IF NOT EXISTS users (
     password VARCHAR(255) NOT NULL,
     first_name VARCHAR(100),
     last_name VARCHAR(100),
-    role user_role NOT NULL DEFAULT 'USER',
+    role UserRole NOT NULL DEFAULT 'USER',
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
@@ -40,7 +49,7 @@ CREATE TABLE IF NOT EXISTS orders (
     user_id BIGINT NOT NULL,
     order_date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     total_price NUMERIC(10, 2) NOT NULL,
-    status order_status NOT NULL DEFAULT 'PENDING',
+    status OrderStatus NOT NULL DEFAULT 'PENDING',
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
@@ -91,6 +100,24 @@ CREATE TABLE IF NOT EXISTS product_reviews (
     UNIQUE (product_id, user_id)
 );
 
+-- Wishlist table
+CREATE TABLE IF NOT EXISTS wishlist (
+    id BIGSERIAL PRIMARY KEY,
+    user_id BIGINT NOT NULL UNIQUE,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- Wishlist products join table
+CREATE TABLE IF NOT EXISTS wishlist_products (
+    wishlist_id BIGINT NOT NULL,
+    product_id BIGINT NOT NULL,
+    PRIMARY KEY (wishlist_id, product_id),
+    FOREIGN KEY (wishlist_id) REFERENCES wishlist(id) ON DELETE CASCADE,
+    FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
+);
+
 -- Create indexes for performance
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 CREATE INDEX IF NOT EXISTS idx_products_category ON products(category);
@@ -103,3 +130,5 @@ CREATE INDEX IF NOT EXISTS idx_cart_items_cart_id ON cart_items(cart_id);
 CREATE INDEX IF NOT EXISTS idx_cart_items_product_id ON cart_items(product_id);
 CREATE INDEX IF NOT EXISTS idx_product_reviews_product_id ON product_reviews(product_id);
 CREATE INDEX IF NOT EXISTS idx_product_reviews_user_id ON product_reviews(user_id);
+CREATE INDEX IF NOT EXISTS idx_wishlist_user_id ON wishlist(user_id);
+CREATE INDEX IF NOT EXISTS idx_wishlist_products_product_id ON wishlist_products(product_id);

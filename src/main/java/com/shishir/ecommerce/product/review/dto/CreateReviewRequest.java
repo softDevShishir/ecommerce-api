@@ -18,8 +18,7 @@ import lombok.NoArgsConstructor;
 @Schema(description = "Request to create a product review")
 public class CreateReviewRequest {
 
-    @NotNull
-    @Schema(description = "Product ID being reviewed", example = "1")
+    @Schema(description = "Product ID being reviewed, set from the path variable", example = "1", accessMode = Schema.AccessMode.READ_ONLY)
     private Long productId;
 
     @NotNull

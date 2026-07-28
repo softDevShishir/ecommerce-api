@@ -37,6 +37,11 @@ public final class Routes {
     public static final String CART_ITEMS = CART + "/items";
     public static final String CART_ITEM_BY_ID = CART + "/items/{cartItemId}";
 
+    public static final String WISHLIST = USERS + "/wishlist";
+    public static final String WISHLIST_ITEMS = WISHLIST + "/items";
+    public static final String WISHLIST_ITEM_BY_ID = WISHLIST + "/items/{productId}";
+    public static final String WISHLIST_ITEM_EXISTS = WISHLIST_ITEM_BY_ID + "/exists";
+
     public static final String AUTH = V1 + "/auth";
     public static final String AUTH_LOGIN = AUTH + "/login";
     public static final String AUTH_REGISTER = AUTH + "/register";

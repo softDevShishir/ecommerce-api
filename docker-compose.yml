@@ -37,7 +37,7 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${DB_NAME:-ecommerce_db}
       SPRING_DATASOURCE_USERNAME: ${DB_USERNAME:-ecommerce_user}
       SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-ecommerce_password}
-      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_JPA_HIBERNATE_DDL_AUTO: validate
       SPRING_JPA_DATABASE_PLATFORM: org.hibernate.dialect.PostgreSQLDialect
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-dev}
       JWT_SECRET: ${JWT_SECRET:-your-secret-key}
