@@ -70,7 +70,7 @@ Code is organized **feature-first**, not layer-first: `user/`, `product/`, `orde
 
 ### Security model
 
-`SecurityConfig` is fully stateless (`SessionCreationPolicy.STATELESS`, CSRF disabled). Public endpoints are enumerated explicitly (auth login, user registration, `GET` products); `DELETE /api/v1/products/**` and `PUT /api/v1/orders/{id}/status` require `ROLE_ADMIN`; everything else just requires authentication. `JwtAuthenticationFilter` runs before `UsernamePasswordAuthenticationFilter` and derives the caller's authority from the `role` claim in the JWT (`ROLE_<UserRole>`). CORS origins/methods/headers/credentials/max-age are all driven by `app.cors.*` properties, not hardcoded.
+`SecurityConfig` is fully stateless (`SessionCreationPolicy.STATELESS`, CSRF disabled). Public endpoints are enumerated explicitly (auth login, user registration, `GET` products); `POST`/`PUT /api/v1/products/**`, `DELETE /api/v1/products/**`, and `PUT /api/v1/orders/{id}/status` require `ROLE_ADMIN`; everything else just requires authentication. `JwtAuthenticationFilter` runs before `UsernamePasswordAuthenticationFilter` and derives the caller's authority from the `role` claim in the JWT (`ROLE_<UserRole>`). CORS origins/methods/headers/credentials/max-age are all driven by `app.cors.*` properties, not hardcoded.
 
 ### Data layer
 

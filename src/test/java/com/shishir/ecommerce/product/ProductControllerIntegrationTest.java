@@ -36,8 +36,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 /**
  * Runs {@link ProductController} against a real database (see
  * src/test/resources/application.yml). Read endpoints are public per
- * SecurityConfig; POST only requires an authenticated caller (any role) —
- * the admin user below is used for realism, not because the role is enforced.
+ * SecurityConfig; create/update require ROLE_ADMIN.
  */
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -192,7 +191,7 @@ class ProductControllerIntegrationTest {
     @Test
     @DisplayName("Should reject product creation with a non-positive price")
     void testCreateProductInvalidPrice() throws Exception {
-        String token = createUserAndToken("buyer@example.com", UserRole.USER);
+        String token = createUserAndToken("admin@example.com", UserRole.ADMIN);
 
         ProductCreateRequest request = ProductCreateRequest.builder()
                 .name("Broken")

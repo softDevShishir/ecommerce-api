@@ -50,7 +50,8 @@ public class SwaggerConfig {
         return GroupedOpenApi.builder()
                 .group("public-apis")
                 .displayName("Public Endpoints")
-                .pathsToMatch(Routes.AUTH + "/**", Routes.PRODUCTS, Routes.PRODUCT_BY_ID)
+                .pathsToMatch(Routes.AUTH + "/**", Routes.PRODUCTS, Routes.PRODUCT_BY_ID,
+                        Routes.PRODUCT_REVIEWS, Routes.PRODUCT_RATING)
                 .build();
     }
 
@@ -59,7 +60,8 @@ public class SwaggerConfig {
         return GroupedOpenApi.builder()
                 .group("secured-apis")
                 .displayName("Protected Endpoints (Require JWT)")
-                .pathsToMatch(Routes.USERS + "/**", Routes.ORDERS + "/**", Routes.CART + "/**")
+                .pathsToMatch(Routes.USERS + "/**", Routes.ORDERS + "/**", Routes.CART + "/**",
+                        Routes.PRODUCT_REVIEW_BY_ID, Routes.REVIEWS + "/**")
                 .addOpenApiCustomizer(openApi -> openApi.addSecurityItem(
                         new SecurityRequirement().addList(BEARER_SECURITY_SCHEME)))
                 .build();

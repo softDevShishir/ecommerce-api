@@ -4,6 +4,17 @@
 
 This guide covers deploying the E-Commerce REST API to production environments.
 
+## Currently Deployed
+
+The API is live on Render.com:
+- **Base URL:** https://ecommerce-api-9236.onrender.com
+- **Swagger UI:** https://ecommerce-api-9236.onrender.com/swagger-ui.html
+- **OpenAPI spec:** https://ecommerce-api-9236.onrender.com/v3/api-docs
+
+Deployed with `SPRING_PROFILES_ACTIVE=prod`, a managed Render PostgreSQL instance, and auto-deploy from the `main` branch. Free-tier instances spin down after inactivity — the first request after idle time can take 30–60 seconds.
+
+**CI mismatch:** `.github/workflows/ci.yml` invokes `./mvnw`, but this repo has no committed Maven wrapper (`mvnw`/`.mvn`) — CI will fail as-is until one is added (`mvn -N wrapper:wrapper`) or the workflow is changed to call `mvn` directly. If the wrapper is added, CI also needs a `~/.m2/toolchains.xml` with a JDK 21 entry (or a JDK-21-pinned runner), since `pom.xml` pins compilation to a JDK 21 toolchain that Lombok 1.18.32 requires — CI doesn't currently have one configured.
+
 ## Prerequisites
 
 - Docker & Docker Compose
@@ -92,7 +103,9 @@ docker push username/ecommerce-api:latest
 
 ## Environment Variables
 
-### Required
+These are the variables the application actually reads (verified against `application.yml`/`application-prod.yml`/`SecurityConfig`) — see `.env.example` for the canonical local-dev list.
+
+### Required (on the `prod` profile)
 
 - `DB_HOST` - PostgreSQL hostname
 - `DB_PORT` - PostgreSQL port (default: 5432)
@@ -101,11 +114,16 @@ docker push username/ecommerce-api:latest
 - `DB_PASSWORD` - Database password
 - `JWT_SECRET` - Secure random key (min 256 bits)
 
+The base (no-profile) config hardcodes its datasource URL/credentials instead — only `application-prod.yml`'s placeholders read `DB_*`, or Spring's own env-var override (`SPRING_DATASOURCE_URL`/`_USERNAME`/`_PASSWORD`, which beats *any* profile's YAML regardless of placeholders — this is what `docker-compose.yml` relies on).
+
 ### Optional
 
-- `SPRING_PROFILES_ACTIVE` - Profile (dev, prod) - default: dev
+- `SPRING_PROFILES_ACTIVE` - Profile (dev, prod) - default: dev (Spring Boot's own convention, not a custom property)
 - `SERVER_PORT` - Server port - default: 8080
 - `JWT_EXPIRATION` - Token expiration in ms - default: 86400000
+- `CORS_ALLOWED_ORIGINS` - Comma-separated allowed origins, read by `SecurityConfig` via `app.cors.allowed-origins` - default: `http://localhost:3000,http://localhost:4200`
+
+Nothing else in `src/main/resources/*.yml` reads from the environment — `application-prod.yml`'s `logging.file.name` (`logs/ecommerce-api.log`) and Hikari pool sizes (max 20, min idle 5) are fixed in the file itself, not env-configurable.
 
 ### Generate a Secure JWT Secret
 
@@ -157,6 +175,10 @@ Logs are written to:
 curl http://localhost:8080/swagger-ui.html
 ```
 
+## Verifying a Deployment
+
+Once deployed, sanity-check it with the Postman collection in `postman/ecommerce-api.postman_collection.json` — import it, set the collection's `base_url` variable to your deployment's URL, and run the auth → products → cart → orders flow. See [README.md's Live Demo section](README.md#-live-demo) for step-by-step Postman import instructions, or use the `curl` examples in [API_GUIDE.md](API_GUIDE.md).
+
 ## SSL/HTTPS
 
 ### Using Render/Railway
@@ -185,11 +207,16 @@ Configured in `application-prod.yml`:
 
 ### Database Indexes
 
-Already created on:
+Already created (see `schema.sql`) on:
 - `users.email`
 - `products.category`
-- `orders.user_id`
+- `orders.user_id`, `orders.status`
+- `order_items.order_id`, `order_items.product_id`
 - `cart.user_id`
+- `cart_items.cart_id`, `cart_items.product_id`
+- `product_reviews.product_id`, `product_reviews.user_id`
+- `wishlist.user_id`
+- `wishlist_products.product_id`
 
 ## Backup & Restore
 

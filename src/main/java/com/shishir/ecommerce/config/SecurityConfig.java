@@ -76,6 +76,8 @@ public class SecurityConfig {
                         // Must precede the DELETE .../products/** ADMIN-only rule below, since that
                         // wildcard would otherwise also match review deletion and lock it to admins.
                         .requestMatchers(HttpMethod.DELETE, Routes.PRODUCT_REVIEW_BY_ID).authenticated()
+                        .requestMatchers(HttpMethod.POST, Routes.PRODUCTS).hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, Routes.PRODUCT_BY_ID).hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, Routes.PRODUCTS + "/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PUT, Routes.ORDER_STATUS).hasRole("ADMIN")
                         .anyRequest().authenticated()
